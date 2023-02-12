@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/amancooks08/BookMySport/db"
 	"golang.org/x/crypto/bcrypt"
@@ -15,8 +16,9 @@ type Services interface {
 	AddVenue(ctx context.Context, venue *db.Venue) error
 	GetAllVenues(ctx context.Context) ([]*db.Venue, error)
 	GetVenue(ctx context.Context, name string) (*db.Venue, error)
-	UpdateVenue(ctx context.Context, venue *db.Venue) error
-	DeleteVenue(ctx context.Context, iname string) error
+	UpdateVenue(ctx context.Context, venue *db.Venue, id int) error
+	DeleteVenue(ctx context.Context, id int) error
+	CheckAvailability(ctx context.Context, id int, date time.Time) ([]*db.Slot, error)
 }
 
 type UserOps struct {
@@ -28,7 +30,6 @@ func NewCustomerOps(storer db.Storer) Services {
 		storer: storer,
 	}
 }
-
 
 func (cs *UserOps) RegisterUser(ctx context.Context, user *db.User) error {
 	user.Password, _ = HashPassword(user.Password)
@@ -45,6 +46,7 @@ func (cs *UserOps) LoginUser(ctx context.Context, email string, password string)
 }
 
 func (cs *UserOps) AddVenue(ctx context.Context, venue *db.Venue) error {
+
 	err := cs.storer.AddVenue(ctx, venue)
 	return err
 }
@@ -59,13 +61,17 @@ func (cs *UserOps) GetVenue(ctx context.Context, name string) (*db.Venue, error)
 	return venue, err
 }
 
-func (cs *UserOps) UpdateVenue(ctx context.Context, venue *db.Venue) error {
-	err := cs.storer.UpdateVenue(ctx, venue)
+func (cs *UserOps) UpdateVenue(ctx context.Context, venue *db.Venue, id int) error {
+	err := cs.storer.UpdateVenue(ctx, venue, id)
 	return err
 }
 
-func (cs *UserOps) DeleteVenue(ctx context.Context, name string) error {
-	err := cs.storer.DeleteVenue(ctx, name)
+func (cs *UserOps) DeleteVenue(ctx context.Context, id int) error {
+	err := cs.storer.DeleteVenue(ctx, id)
 	return err
 }
 
+func (cs *UserOps) CheckAvailability(ctx context.Context, id int, date time.Time) ([]*db.Slot, error) {
+	slots, err := cs.storer.CheckAvailability(ctx, id, date)
+	return slots, err
+}

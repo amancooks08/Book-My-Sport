@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"time"
 )
 
 type Storer interface {
@@ -10,9 +11,9 @@ type Storer interface {
 	AddVenue(context.Context, *Venue) error
 	GetAllVenues(context.Context) ([]*Venue, error)
 	GetVenue(context.Context, string) (*Venue, error)
-	UpdateVenue(context.Context, *Venue) error
-	DeleteVenue(context.Context, string) error
-	// CheckAvailability(context.Context, string, string) (bool, error)
+	UpdateVenue(context.Context, *Venue, int) error
+	DeleteVenue(context.Context, int) error
+	CheckAvailability(context.Context, int, time.Time) ([]*Slot, error)
 	// BookVenue(context.Context, *Booking) error
 	// GetBookings(context.Context, string) ([]Booking, error)
 	// GetAllBookings(context.Context) ([]Booking, error)

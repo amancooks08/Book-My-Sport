@@ -20,7 +20,6 @@ CREATE TABLE "venue"(
     "email" VARCHAR(255) NOT NULL,
     "opening_time" TIME(0) WITHOUT TIME ZONE NOT NULL,
     "closing_time" TIME(0) WITHOUT TIME ZONE NOT NULL,
-    "games" TEXT NOT NULL,
     "price" BIGINT NOT NULL,
     "rating" DECIMAL(8, 2) NOT NULL
 );
@@ -42,6 +41,7 @@ CREATE TABLE "booking"(
 CREATE TABLE "slots"(
     "id" SERIAL PRIMARY KEY,
     "venue_id" BIGINT NOT NULL REFERENCES "venue"("id"),
+    "date" DATE NOT NULL,
     "start_time" TIME(0) WITHOUT TIME ZONE NOT NULL,
     "end_time" TIME(0) WITHOUT TIME ZONE NOT NULL,
     "duration" BIGINT NOT NULL,

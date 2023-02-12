@@ -21,12 +21,12 @@ type User struct {
 }
 
 type Venue struct {
-	Id       int       `json:"id"`
 	Name     string    `json:"name"`
 	Contact  string    `json:"contact"`
 	City     string    `json:"city"`
 	State    string    `json:"state"`
 	Address  string    `json:"address"`
+	Email    string    `json:"email"`
 	Opening  time.Time `json:"opening_time"`
 	Closing  time.Time `json:"closing_time"`
 	Price    float64   `json:"price"`

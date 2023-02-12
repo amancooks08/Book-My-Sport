@@ -20,8 +20,9 @@ func InitRouter(deps dependencies) (router *mux.Router) {
 	router.HandleFunc("/user/login", LoginCustomer(deps)).Methods(http.MethodPost)
 	router.HandleFunc("/admin/venues/add", AddVenue(deps)).Methods(http.MethodPost)
 	router.HandleFunc("/user/venues", GetAllVenues(deps)).Methods(http.MethodGet)
-	router.HandleFunc("/user/venues/{name}", GetVenue(deps)).Methods(http.MethodGet)
-	router.HandleFunc("/admin/venues/{name}", UpdateVenue(deps)).Methods(http.MethodPut)
-	router.HandleFunc("/admin/venues/{name}", DeleteVenue(deps)).Methods(http.MethodDelete)
+	router.HandleFunc("/user/venues/{venue_name}", GetVenue(deps)).Methods(http.MethodGet)
+	router.HandleFunc("/admin/venues/{venue_id}", UpdateVenue(deps)).Methods(http.MethodPut)
+	router.HandleFunc("/admin/venues/{venue_id}", DeleteVenue(deps)).Methods(http.MethodDelete)
+	router.HandleFunc("/user/venues/{venue_name}/slots", CheckAvailability(deps)).Methods(http.MethodGet)
 	return
 }
