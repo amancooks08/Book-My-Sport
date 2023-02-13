@@ -17,7 +17,7 @@ func InitRouter(deps dependencies) (router *mux.Router) {
 	// v1 := fmt.Sprintf("application/vnd", config.AppName())
 	router.HandleFunc("/customer/register", RegisterCustomer(deps)).Methods(http.MethodPost)
 	router.HandleFunc("/admin/register", RegisterAdmin(deps)).Methods(http.MethodPost)
-	router.HandleFunc("/user/login", LoginCustomer(deps)).Methods(http.MethodPost)
+	router.HandleFunc("/user/login", LoginUser(deps)).Methods(http.MethodPost)
 	router.HandleFunc("/admin/venues/add", AddVenue(deps)).Methods(http.MethodPost)
 	router.HandleFunc("/user/venues", GetAllVenues(deps)).Methods(http.MethodGet)
 	router.HandleFunc("/user/venues/{venue_name}", GetVenue(deps)).Methods(http.MethodGet)

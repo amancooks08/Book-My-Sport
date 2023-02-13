@@ -16,26 +16,24 @@ type Slot struct {
 }
 
 func generateSlots(db *sqlx.DB, venueID int, startTime time.Time, endTime time.Time) error {
-	for i := 0; i < 7; i++ {
-		day := time.Now().AddDate(0, 0, i).Format("2023-02-10")
-		currentTime := startTime
-		for currentTime.Before(endTime) {
-			slotStart := day + " " + currentTime.Format("15:04:05")
-			slotEnd := day + " " + currentTime.Add(1*time.Hour).Format("15:04:05")
-			var slotExists bool
-			err := db.QueryRow("SELECT exists(SELECT 1 FROM slots WHERE venue_id = $1 AND slot_start = $2 AND slot_end = $3)", venueID, slotStart, slotEnd).Scan(&slotExists)
+	day := time.Now().Format("2023-02-10")
+	currentTime := startTime
+	for currentTime.Before(endTime) {
+		slotStart := day + " " + currentTime.Format("15:04:05")
+		slotEnd := day + " " + currentTime.Add(1*time.Hour).Format("15:04:05")
+		var slotExists bool
+		err := db.QueryRow("SELECT exists(SELECT 1 FROM slots WHERE venue_id = $1 AND slot_start = $2 AND slot_end = $3)", venueID, slotStart, slotEnd).Scan(&slotExists)
+		if err != nil {
+			return err
+		}
+		zero := 0
+		if !slotExists {
+			_, err := db.Exec("INSERT INTO slots (venue_id, slot_start, slot_end, duration, status, date) VALUES ($1, $2, $3, $4, $5, $6)", venueID, slotStart, slotEnd, zero, day)
 			if err != nil {
 				return err
 			}
-			zero := 0
-			if !slotExists {
-				_, err := db.Exec("INSERT INTO slots (venue_id, slot_start, slot_end, duration, status, date) VALUES ($1, $2, $3, $4, $5, $6)", venueID, slotStart, slotEnd, zero, day)
-				if err != nil {
-					return err
-				}
-			}
-			currentTime = currentTime.Add(1 * time.Hour)
 		}
+		currentTime = currentTime.Add(1 * time.Hour)
 	}
 	return nil
 }
