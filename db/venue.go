@@ -2,38 +2,34 @@ package db
 
 import (
 	"context"
-	"time"
 
 	logger "github.com/sirupsen/logrus"
 )
 
 type Venue struct {
-	Id      int       `json:"id"`
-	Name    string    `json:"name"`
-	Address string    `json:"address"`
-	City    string    `json:"city"`
-	State   string    `json:"state"`
-	Contact string    `json:"contact"`
-	Email   string    `json:"email"`
-	Opening time.Time `json:"opening_time"`
-	Closing time.Time `json:"closing_time"`
-	Price   float64   `json:"price"`
-	Rating  float64   `json:"rating"`
+	Id      int     `json:"id"`
+	Name    string  `json:"name"`
+	Address string  `json:"address"`
+	City    string  `json:"city"`
+	State   string  `json:"state"`
+	Contact string  `json:"contact"`
+	Email   string  `json:"email"`
+	Opening string  `json:"opening_time"`
+	Closing string  `json:"closing_time"`
+	Price   float64 `json:"price"`
+	Rating  float64 `json:"rating"`
 }
-
 
 // AddVenue adds a venue to the database
 func (s *pgStore) AddVenue(ctx context.Context, venue *Venue) error {
-	logger.Info("Venue already exists")
 	sqlQuery := `INSERT INTO venue (name, contact, city, state, address, email, opening_time, closing_time, price, rating)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) returning id`
+
 	err := s.db.QueryRow(sqlQuery, &venue.Name, &venue.Contact, &venue.City, &venue.State, &venue.Address, &venue.Email, &venue.Opening, &venue.Closing, &venue.Price, &venue.Rating).Scan(&venue.Id)
 	if err != nil {
 		logger.WithField("err", err.Error()).Error("Error adding venue")
 		return err
 	}
-	
-	generateSlots(s.db, venue.Id, venue.Opening, venue.Closing)
 
 	return err
 }
@@ -49,7 +45,7 @@ func (s *pgStore) GetAllVenues(ctx context.Context) ([]*Venue, error) {
 	defer rows.Close()
 	venues := []*Venue{}
 	for rows.Next() {
-		venue := &Venue{Id: 0, Name: "", Contact: "", City: "", State: "", Address: "", Email: "", Opening: time.Time{}, Closing: time.Time{}, Price: 0, Rating: 0}
+		venue := &Venue{Id: 0, Name: "", Contact: "", City: "", State: "", Address: "", Email: "", Opening: "", Closing: "", Price: 0, Rating: 0}
 		err = rows.Scan(&venue.Id, &venue.Name, &venue.Address, &venue.City, &venue.State, &venue.Contact, &venue.Email, &venue.Opening, &venue.Closing, &venue.Price, &venue.Rating)
 		if err != nil {
 			logger.WithField("err", err.Error()).Error("Error fetching all venues")
@@ -103,11 +99,34 @@ func (s *pgStore) DeleteVenue(ctx context.Context, id int) error {
 	return err
 }
 
-
 //Check availability of slots at a venue
 
-func (s *pgStore) CheckAvailability(ctx context.Context, venueId int, date time.Time) ([]*Slot, error) {
-	sqlQuery := `SELECT * FROM "slot" WHERE venue_id = $1 AND date = $2 AND status = 'available'`
+func (s *pgStore) CheckAvailability(ctx context.Context, venueId int, date string) ([]*Slot, error) {
+	var exists bool
+	// Check if slots for the venue on that day exist
+	err := s.db.QueryRow("SELECT exists(SELECT 1 FROM slots WHERE venue_id = $1 AND date = $2)", venueId, date).Scan(&exists)
+	if err != nil {
+		logger.WithField("err", err.Error()).Error("Error checking availability")
+		return nil, err
+	}
+	if !exists {
+		// If slots don't exist, create them
+		var venueOpen, venueClose string
+		err = s.db.QueryRow("SELECT opening_time, closing_time FROM venue WHERE id = $1", venueId).Scan(&venueOpen, &venueClose)
+		if err != nil {
+			logger.WithField("err", err.Error()).Error("Error getting venue opening and closing times")
+			return nil, err
+		}
+		err = generateSlots(s.db, venueId, venueOpen, venueClose, date)
+		if err != nil {
+			logger.WithField("err", err.Error()).Error("Error generating slots")
+			return nil, err
+		}
+	}
+
+	// Return all available slots for the venue on that day
+
+	sqlQuery := `SELECT id, venue_id, start_time, end_time, date FROM "slots" WHERE venue_id = $1 AND date = $2 AND status = 'available'`
 	rows, err := s.db.Query(sqlQuery, &venueId, &date)
 	if err != nil {
 		logger.WithField("err", err.Error()).Error("Error getting slots")
@@ -116,8 +135,8 @@ func (s *pgStore) CheckAvailability(ctx context.Context, venueId int, date time.
 	defer rows.Close()
 	slots := []*Slot{}
 	for rows.Next() {
-		slot := &Slot{Id: 0, VenueId: 0, Date: time.Time{}, StartTime: time.Time{}, EndTime: time.Time{}, Status: false}
-		err = rows.Scan(&slot.Id, &slot.VenueId, &slot.Date, &slot.StartTime, &slot.EndTime, &slot.Status)
+		slot := &Slot{Id: 0, VenueId: 0, Date: "", StartTime: "", EndTime: ""}
+		err = rows.Scan(&slot.Id, &slot.VenueId, &slot.StartTime, &slot.EndTime, &slot.Date)
 		if err != nil {
 			logger.WithField("err", err.Error()).Error("Error fetching slots")
 			return nil, err

@@ -4,31 +4,41 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	logger "github.com/sirupsen/logrus"
 )
 
 type Slot struct {
-	Id        int    `json:"id"`
-	VenueId   int    `json:"venue_id"`
-	Date      time.Time `json:"date"`
-	StartTime time.Time `json:"start_time"`
-	EndTime   time.Time `json:"end_time"`
-	Status    bool 		`json:"status"`
+	Id        int       `json:"id"`
+	VenueId   int       `json:"venue_id"`
+	Date      string 	`json:"date"`
+	StartTime string 	`json:"start_time"`
+	EndTime   string 	`json:"end_time"`
 }
 
-func generateSlots(db *sqlx.DB, venueID int, startTime time.Time, endTime time.Time) error {
-	day := time.Now().Format("2023-02-10")
-	currentTime := startTime
-	for currentTime.Before(endTime) {
-		slotStart := day + " " + currentTime.Format("15:04:05")
-		slotEnd := day + " " + currentTime.Add(1*time.Hour).Format("15:04:05")
+func generateSlots(db *sqlx.DB, venueID int, startTime string, endTime string, day string) error {
+	currentTime, err := time.Parse("2006-01-02T15:04:05Z", startTime)
+	if err != nil {
+		return err
+	}
+	endingTime, err := time.Parse("2006-01-02T15:04:05Z", endTime)
+	if err != nil {
+		return err
+	}
+
+	for currentTime.Before(endingTime) {
+		slotStart := currentTime.Format("15:04:05")
+		slotEnd := currentTime.Add(1 * time.Hour).Format("15:04:05")
 		var slotExists bool
-		err := db.QueryRow("SELECT exists(SELECT 1 FROM slots WHERE venue_id = $1 AND slot_start = $2 AND slot_end = $3)", venueID, slotStart, slotEnd).Scan(&slotExists)
+
+		err := db.QueryRow("SELECT exists(SELECT 1 FROM slots WHERE venue_id = $1 AND start_time = $2 AND end_time = $3)", venueID, slotStart, slotEnd).Scan(&slotExists)
 		if err != nil {
 			return err
 		}
-		zero := 0
+
+		availability := "available"
+		logger.Info(slotExists)
 		if !slotExists {
-			_, err := db.Exec("INSERT INTO slots (venue_id, slot_start, slot_end, duration, status, date) VALUES ($1, $2, $3, $4, $5, $6)", venueID, slotStart, slotEnd, zero, day)
+			_, err := db.Exec("INSERT INTO slots (venue_id, start_time, end_time, status, date) VALUES ($1, $2, $3, $4, $5)", venueID, slotStart, slotEnd, availability, day)
 			if err != nil {
 				return err
 			}

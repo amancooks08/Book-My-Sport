@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"time"
 
 	"github.com/amancooks08/BookMySport/db"
 	"golang.org/x/crypto/bcrypt"
@@ -18,7 +17,11 @@ type Services interface {
 	GetVenue(ctx context.Context, name string) (*db.Venue, error)
 	UpdateVenue(ctx context.Context, venue *db.Venue, id int) error
 	DeleteVenue(ctx context.Context, id int) error
-	CheckAvailability(ctx context.Context, id int, date time.Time) ([]*db.Slot, error)
+	CheckAvailability(ctx context.Context, id int, date string) ([]*db.Slot, error)
+	BookSlot(ctx context.Context, b *db.Booking) error
+	GetAllBookings(ctx context.Context, userId int) ([]*db.Booking, error)
+	GetBooking(ctx context.Context, bookingid int) (*db.Booking, error)
+	CancelBooking(ctx context.Context, id int) error
 }
 
 type UserOps struct {
@@ -71,7 +74,27 @@ func (cs *UserOps) DeleteVenue(ctx context.Context, id int) error {
 	return err
 }
 
-func (cs *UserOps) CheckAvailability(ctx context.Context, id int, date time.Time) ([]*db.Slot, error) {
+func (cs *UserOps) CheckAvailability(ctx context.Context, id int, date string) ([]*db.Slot, error) {
 	slots, err := cs.storer.CheckAvailability(ctx, id, date)
 	return slots, err
+}
+
+func (cs *UserOps) BookSlot(ctx context.Context, b *db.Booking) error {
+	err := cs.storer.BookSlot(ctx, b)
+	return err
+}
+
+func (cs *UserOps) GetAllBookings(ctx context.Context, userId int) ([]*db.Booking, error) {
+	bookings, err := cs.storer.GetAllBookings(ctx, userId)
+	return bookings, err
+}
+
+func (cs *UserOps) GetBooking(ctx context.Context, id int) (*db.Booking, error) {
+	booking, err := cs.storer.GetBooking(ctx, id)
+	return booking, err
+}
+
+func (cs *UserOps) CancelBooking(ctx context.Context, id int) error {
+	err := cs.storer.CancelBooking(ctx, id)
+	return err
 }
