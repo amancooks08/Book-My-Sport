@@ -22,7 +22,7 @@ func registerUser(rw http.ResponseWriter, req *http.Request, deps dependencies, 
 		return
 	}
 	defer req.Body.Close()
-	if user.Name == "" || user.Contact == "" || user.Email == "" || user.City == "" || user.State == "" {
+	if user.Name == "" || user.Contact == "" || user.Email == "" || user.City == "" || user.State == "" || user.Password == "" {
 		http.Error(rw, "Invalid request payload", http.StatusBadRequest)
 		return
 	}

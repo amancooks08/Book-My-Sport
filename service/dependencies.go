@@ -11,7 +11,7 @@ type dependencies struct {
 func InitDependencies() (deps dependencies, err error) {
 	storer, err := db.Init()
 	if err != nil {
-		return 
+		return
 	}
 
 	venueService := NewCustomerOps(storer)

@@ -2,16 +2,20 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/amancooks08/BookMySport/db"
+	jwt "github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/bcrypt"
+
+	logger "github.com/sirupsen/logrus"
 )
 
 var secretKey = []byte("secret@987")
 
 type Services interface {
 	RegisterUser(ctx context.Context, user *db.User) error
-	LoginUser(ctx context.Context, email string, password string) (bool, error)
+	LoginUser(ctx context.Context, email string, password string) (string, error)
 	AddVenue(ctx context.Context, venue *db.Venue) error
 	GetAllVenues(ctx context.Context) ([]*db.Venue, error)
 	GetVenue(ctx context.Context, name string) (*db.Venue, error)
@@ -22,6 +26,17 @@ type Services interface {
 	GetAllBookings(ctx context.Context, userId int) ([]*db.Booking, error)
 	GetBooking(ctx context.Context, bookingid int) (*db.Booking, error)
 	CancelBooking(ctx context.Context, id int) error
+}
+
+func GenerateToken(loginResponse *db.LoginResponse) (string, error) {
+	tokenExpirationTime := time.Now().Add(time.Hour * 24)
+	tokenObject := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id": loginResponse.Id,
+		"role":    loginResponse.Role,
+		"exp":     tokenExpirationTime.Unix(),
+	})
+	token, err := tokenObject.SignedString(secretKey)
+	return token, err
 }
 
 type UserOps struct {
@@ -40,12 +55,17 @@ func (cs *UserOps) RegisterUser(ctx context.Context, user *db.User) error {
 	return err
 }
 
-func (cs *UserOps) LoginUser(ctx context.Context, email string, password string) (bool, error) {
-	flag, err := cs.storer.LoginUser(ctx, email)
-	if bcrypt.CompareHashAndPassword([]byte(flag), []byte(password)) != nil {
-		return false, err
+func (cs *UserOps) LoginUser(ctx context.Context, email string, password string) (string, error) {
+	loginResponse, err := cs.storer.LoginUser(ctx, email)
+	if bcrypt.CompareHashAndPassword([]byte(loginResponse.Password), []byte(password)) != nil {
+		return "", err
 	}
-	return true, nil
+
+	token, err := GenerateToken(loginResponse)
+	if err != nil {
+		logger.WithField("err", err.Error()).Error("error generating fwt token for userId - %s", loginResponse.Id)
+	}
+	return token, err
 }
 
 func (cs *UserOps) AddVenue(ctx context.Context, venue *db.Venue) error {

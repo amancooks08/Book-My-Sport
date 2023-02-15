@@ -6,7 +6,6 @@ import (
 	"testing"
 )
 
-
 func TestRegisterCustomer(t *testing.T) {
 	type args struct {
 		deps dependencies

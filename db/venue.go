@@ -111,6 +111,7 @@ func (s *pgStore) CheckAvailability(ctx context.Context, venueId int, date strin
 	}
 	if !exists {
 		// If slots don't exist, create them
+		logger.Info("Slots don't exist, generating them")
 		var venueOpen, venueClose string
 		err = s.db.QueryRow("SELECT opening_time, closing_time FROM venue WHERE id = $1", venueId).Scan(&venueOpen, &venueClose)
 		if err != nil {
@@ -135,8 +136,12 @@ func (s *pgStore) CheckAvailability(ctx context.Context, venueId int, date strin
 	defer rows.Close()
 	slots := []*Slot{}
 	for rows.Next() {
+		logger.Info("Slot found")
 		slot := &Slot{Id: 0, VenueId: 0, Date: "", StartTime: "", EndTime: ""}
 		err = rows.Scan(&slot.Id, &slot.VenueId, &slot.StartTime, &slot.EndTime, &slot.Date)
+		slot.Date = slot.Date[0:10]
+		slot.StartTime = slot.StartTime[11:16]
+		slot.EndTime = slot.EndTime[11:16]
 		if err != nil {
 			logger.WithField("err", err.Error()).Error("Error fetching slots")
 			return nil, err

@@ -3,6 +3,7 @@ module github.com/amancooks08/BookMySport
 go 1.19
 
 require (
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/golang-jwt/jwt/v4 v4.4.3
 	github.com/gorilla/mux v1.8.0
 	github.com/jmoiron/sqlx v1.3.5

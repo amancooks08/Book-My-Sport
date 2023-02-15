@@ -15,6 +15,7 @@ import (
 // Add a  venue
 func AddVenue(deps dependencies) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		
 		if req.Method != http.MethodPost {
 			rw.WriteHeader(http.StatusMethodNotAllowed)
 			return
@@ -52,6 +53,7 @@ func AddVenue(deps dependencies) http.HandlerFunc {
 // Update a venue
 func UpdateVenue(deps dependencies) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+
 		if req.Method != http.MethodPut {
 			rw.WriteHeader(http.StatusMethodNotAllowed)
 			return
@@ -86,10 +88,54 @@ func UpdateVenue(deps dependencies) http.HandlerFunc {
 		rw.WriteHeader(http.StatusOK)
 	})
 }
+// Check availbility at a venue
+func CheckAvailability(deps dependencies) http.HandlerFunc {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		
+		if req.Method != http.MethodGet {
+			rw.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		vars := mux.Vars(req)
+		venueID, err := strconv.Atoi(vars["venue_id"])
+		if err != nil {
+			http.Error(rw, fmt.Sprint(err)+": Invalid ID", http.StatusBadRequest)
+			return
+		}
+
+		date, err := time.Parse("2006-01-02", req.URL.Query().Get("date"))
+		if err != nil {
+			http.Error(rw, fmt.Sprint(err)+": Invalid date", http.StatusBadRequest)
+			return
+		}
+
+		if date.After(time.Now().Truncate(24 * time.Hour)) {
+			availabileSlots, err := deps.CustomerServices.CheckAvailability(req.Context(), venueID, date.Format("2006-01-02"))
+			if err != nil {
+				http.Error(rw, fmt.Sprintf("%s", err), http.StatusInternalServerError)
+				return
+			}
+
+			respBytes, err := json.Marshal(availabileSlots)
+			if err != nil {
+				http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
+				return
+			}
+
+			rw.Header().Add("Content-Type", "application/json")
+			rw.Write(respBytes)
+		} else {
+			http.Error(rw, "Invalid request payload", http.StatusBadRequest)
+			return
+		}
+	})
+}
+
 
 // Delete a venue
 func DeleteVenue(deps dependencies) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+
 		if req.Method != http.MethodDelete {
 			rw.WriteHeader(http.StatusMethodNotAllowed)
 			return
@@ -110,44 +156,3 @@ func DeleteVenue(deps dependencies) http.HandlerFunc {
 	})
 }
 
-// Check availbility at a venue
-func CheckAvailability(deps dependencies) http.HandlerFunc {
-	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodGet {
-			rw.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-		vars := mux.Vars(req)
-		venueID, err := strconv.Atoi(vars["venue_id"])
-		if err != nil {
-			http.Error(rw, fmt.Sprint(err)+": Invalid ID", http.StatusBadRequest)
-			return
-		}
-
-		date, err := time.Parse("2006-01-02", req.URL.Query().Get("date"))
-		if err != nil {
-			http.Error(rw, fmt.Sprint(err)+": Invalid date", http.StatusBadRequest)
-			return
-		}
-
-		if date.After(time.Now().Truncate(24*time.Hour)) {
-			availabileSlots, err := deps.CustomerServices.CheckAvailability(req.Context(), venueID, date.Format("2006-01-02"))
-			if err != nil {
-				http.Error(rw, fmt.Sprintf("%s", err), http.StatusInternalServerError)
-				return
-			}
-
-			respBytes, err := json.Marshal(availabileSlots)
-			if err != nil {
-				http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
-				return
-			}
-
-		rw.Header().Add("Content-Type", "application/json")
-		rw.Write(respBytes)
-		} else {
-			http.Error(rw, "Invalid request payload", http.StatusBadRequest)
-			return
-		}
-	})
-}

@@ -6,7 +6,7 @@ import (
 
 type Storer interface {
 	RegisterUser(context.Context, *User) error
-	LoginUser(context.Context, string) (string, error)
+	LoginUser(context.Context, string) (*LoginResponse, error)
 	AddVenue(context.Context, *Venue) error
 	GetAllVenues(context.Context) ([]*Venue, error)
 	GetVenue(context.Context, string) (*Venue, error)

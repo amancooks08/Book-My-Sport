@@ -13,6 +13,12 @@ import (
 
 func BookSlot(deps dependencies) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		// Check for the role
+		role := req.Context().Value("role").(string)
+		if role != "customer" {
+			http.Error(rw, "FORBIDDEN", http.StatusUnauthorized)
+			return
+		}
 		if req.Method != http.MethodPost {
 			rw.WriteHeader(http.StatusMethodNotAllowed)
 			return
@@ -53,6 +59,12 @@ func BookSlot(deps dependencies) http.HandlerFunc {
 
 func GetAllBookings(deps dependencies) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		// Check for the role
+		role := req.Context().Value("role").(string)
+		if role != "customer" {
+			http.Error(rw, "FORBIDDEN", http.StatusUnauthorized)
+			return
+		}
 		if req.Method != http.MethodGet {
 			rw.WriteHeader(http.StatusMethodNotAllowed)
 			return
@@ -86,6 +98,13 @@ func GetAllBookings(deps dependencies) http.HandlerFunc {
 
 func GetBooking(deps dependencies) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		// Check for the role
+		role := req.Context().Value("role").(string)
+		if role != "customer" {
+			http.Error(rw, "FORBIDDEN", http.StatusUnauthorized)
+			return
+		}
+
 		if req.Method != http.MethodGet {
 			rw.WriteHeader(http.StatusMethodNotAllowed)
 			return
@@ -119,6 +138,13 @@ func GetBooking(deps dependencies) http.HandlerFunc {
 
 func CancelBooking(deps dependencies) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		// Check for the role
+		role := req.Context().Value("role").(string)
+		if role != "customer" {
+			http.Error(rw, "FORBIDDEN", http.StatusUnauthorized)
+			return
+		}
+
 		if req.Method != http.MethodDelete {
 			rw.WriteHeader(http.StatusMethodNotAllowed)
 			return
@@ -141,7 +167,7 @@ func CancelBooking(deps dependencies) http.HandlerFunc {
 			Reponse string
 		}
 
-		response := jsonResponse{Reponse: fmt.Sprintf("Booking cancelled successfully.")}
+		response := jsonResponse{Reponse: "Booking cancelled successfully."}
 		rw.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(rw).Encode(response)
 		rw.WriteHeader(http.StatusOK)

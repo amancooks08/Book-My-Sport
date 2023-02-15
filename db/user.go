@@ -18,6 +18,12 @@ type User struct {
 	Type     string `db:"type" json:"type"`
 }
 
+type LoginResponse struct {
+	Id       int    `db:"id" json:"id"`
+	Password string `db:"password" json:"password"`
+	Role    string `db:"type" json:"type"`
+}
+
 func (s *pgStore) RegisterUser(ctx context.Context, user *User) error {
 	sqlQuery := `INSERT INTO "user" (name, contact, email, password, city, state, type)
     VALUES ($1, $2, $3, $4, $5, $6, $7) returning id`
@@ -29,17 +35,17 @@ func (s *pgStore) RegisterUser(ctx context.Context, user *User) error {
 	return err
 }
 
-func (s *pgStore) LoginUser(ctx context.Context, email string) (string, error) {
-	sqlQuery := `SELECT password FROM "user" WHERE email = $1 `
-	var pass string
-	err := s.db.QueryRow(sqlQuery, &email).Scan(&pass)
+func (s *pgStore) LoginUser(ctx context.Context, email string) (*LoginResponse, error) {
+	sqlQuery := `SELECT id, password, type FROM "user" WHERE email = $1 `
+	loginResponse := &LoginResponse{}
+	err := s.db.QueryRow(sqlQuery, &email).Scan(&loginResponse.Id, &loginResponse.Password, &loginResponse.Role)
 	switch {
 	case err == sql.ErrNoRows:
 		logger.WithField("err", err.Error()).Error("No user with that Email Id exists.")
-		return "", err
+		return &LoginResponse{}, err
 	case err != nil:
 		logger.WithField("err", err.Error()).Error("Error logging in customer")
-		return "", err
+		return &LoginResponse{}, err
 	}
-	return pass, err
+	return loginResponse, err
 }
