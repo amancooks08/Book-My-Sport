@@ -5,11 +5,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/amancooks08/BookMySport/config"
-	"github.com/amancooks08/BookMySport/db"
-	"github.com/amancooks08/BookMySport/service"
 	"os"
 	"strconv"
+
+	"github.com/amancooks08/BookMySport/config"
+	"github.com/amancooks08/BookMySport/db"
+
+	"github.com/amancooks08/BookMySport/server"
 
 	logger "github.com/sirupsen/logrus"
 	cli "github.com/urfave/cli/v2"
@@ -64,10 +66,10 @@ func main() {
 }
 
 func startApp() (err error) {
-	deps, err := service.InitDependencies()
+	deps, err := server.InitDependencies()
 
 	// mux router
-	router := service.InitRouter(deps)
+	router := server.InitRouter(deps)
 
 	// init web server
 	server := negroni.Classic()

@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
+	"github.com/gorilla/mux"
 	logger "github.com/sirupsen/logrus"
 )
 
@@ -25,19 +27,19 @@ func PingHandler(rw http.ResponseWriter, req *http.Request) {
 	rw.Write(respBytes)
 }
 
-func RegisterCustomer(deps dependencies) http.HandlerFunc {
+func RegisterCustomer(CustomerServices Services) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		registerUser(rw, req, deps, "customer")
+		registerUser(rw, req, CustomerServices, "customer")
 	})
 }
 
-func RegisterAdmin(deps dependencies) http.HandlerFunc {
+func RegisterAdmin(CustomerServices Services) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		registerUser(rw, req, deps, "admin")
+		registerUser(rw, req, CustomerServices, "admin")
 	})
 }
 
-func LoginUser(deps dependencies) http.HandlerFunc {
+func LoginUser(CustomerServices Services) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		if req.Method != http.MethodPost {
 			rw.WriteHeader(http.StatusMethodNotAllowed)
@@ -58,17 +60,23 @@ func LoginUser(deps dependencies) http.HandlerFunc {
 
 		if validateEmail(cu.Email) {
 
-			token, err := deps.CustomerServices.LoginUser(req.Context(), cu.Email, cu.Password)
+			token, err := CustomerServices.LoginUser(req.Context(), cu.Email, cu.Password)
 			if err != nil {
 				http.Error(rw, fmt.Sprintf("%s", err), http.StatusUnauthorized)
 				return
 			}
 			if token != "" {
-				//Write the token in request header for further use under "Authorization" key
-				rw.Header().Add("Authorization", "Bearer "+token)
-				// rw.Header().Add()
-				// Send a successful response
-				rw.Write([]byte("User logged in successfully"))
+				response := &LoginResponse{
+					Token: token,
+					Message: "Login Successful",
+				}
+				respBytes, err := json.Marshal(response)
+				if err != nil {
+					http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
+					return
+				}
+				rw.Header().Add("Content-Type", "application/json")
+				rw.Write(respBytes)
 			} else {
 				http.Error(rw, "Invalid credentials", http.StatusUnauthorized)
 				return
@@ -83,19 +91,19 @@ func LoginUser(deps dependencies) http.HandlerFunc {
 
 }
 
-func GetAllVenues(deps dependencies) http.HandlerFunc {
+func GetAllVenues(CustomerServices Services) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		if req.Method != http.MethodGet {
 			rw.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
 
-		venues, err := deps.CustomerServices.GetAllVenues(req.Context())
+		venues, err := CustomerServices.GetAllVenues(req.Context())
 		if err != nil {
 			http.Error(rw, fmt.Sprintf("%s", err), http.StatusInternalServerError)
 			return
 		}
-
+		
 		respBytes, err := json.Marshal(venues)
 		if err != nil {
 			http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
@@ -107,14 +115,21 @@ func GetAllVenues(deps dependencies) http.HandlerFunc {
 	})
 }
 
-func GetVenue(deps dependencies) http.HandlerFunc {
+func GetVenue(CustomerServices Services) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		if req.Method != http.MethodGet {
 			rw.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		venueID := req.URL.Query().Get("name")
-		venue, err := deps.CustomerServices.GetVenue(req.Context(), venueID)
+		vars := mux.Vars(req)
+		venueID, err := strconv.Atoi(vars["venue_id"])
+
+		if err != nil {
+			http.Error(rw, "Unable to parse VenueID", http.StatusBadRequest)
+			return
+		}
+
+		venue, err := CustomerServices.GetVenue(req.Context(), venueID)
 		if err != nil {
 			http.Error(rw, fmt.Sprintf("%s", err), http.StatusInternalServerError)
 			return

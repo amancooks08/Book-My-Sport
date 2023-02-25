@@ -21,6 +21,7 @@ CREATE TABLE "venue"(
     "opening_time" TIME(0) WITHOUT TIME ZONE NOT NULL,
     "closing_time" TIME(0) WITHOUT TIME ZONE NOT NULL,
     "price" BIGINT NOT NULL,
+    "game" varchar(255)[] NOT NULL,
     "rating" DECIMAL(8, 2) NOT NULL
 );
 

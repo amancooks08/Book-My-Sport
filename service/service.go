@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/amancooks08/BookMySport/db"
@@ -15,14 +16,16 @@ var secretKey = []byte("secret@987")
 
 type Services interface {
 	RegisterUser(ctx context.Context, user *db.User) error
+	CheckUser(ctx context.Context, email string, contact string) error
 	LoginUser(ctx context.Context, email string, password string) (string, error)
 	AddVenue(ctx context.Context, venue *db.Venue) error
+	CheckVenue(ctx context.Context, name string, contact string, email string) error
 	GetAllVenues(ctx context.Context) ([]*db.Venue, error)
-	GetVenue(ctx context.Context, name string) (*db.Venue, error)
+	GetVenue(ctx context.Context, id int) (*db.Venue, error)
 	UpdateVenue(ctx context.Context, venue *db.Venue, id int) error
 	DeleteVenue(ctx context.Context, id int) error
 	CheckAvailability(ctx context.Context, id int, date string) ([]*db.Slot, error)
-	BookSlot(ctx context.Context, b *db.Booking) error
+	BookSlot(ctx context.Context, b *db.Booking) (float64, error)
 	GetAllBookings(ctx context.Context, userId int) ([]*db.Booking, error)
 	GetBooking(ctx context.Context, bookingid int) (*db.Booking, error)
 	CancelBooking(ctx context.Context, id int) error
@@ -52,7 +55,10 @@ func NewCustomerOps(storer db.Storer) Services {
 func (cs *UserOps) RegisterUser(ctx context.Context, user *db.User) error {
 	user.Password, _ = HashPassword(user.Password)
 	err := cs.storer.RegisterUser(ctx, user)
-	return err
+	if err != nil {
+		return errors.New("Error registering user")
+	}
+	return nil
 }
 
 func (cs *UserOps) LoginUser(ctx context.Context, email string, password string) (string, error) {
@@ -63,58 +69,106 @@ func (cs *UserOps) LoginUser(ctx context.Context, email string, password string)
 
 	token, err := GenerateToken(loginResponse)
 	if err != nil {
-		logger.WithField("err", err.Error()).Error("error generating fwt token for userId - %s", loginResponse.Id)
+		logger.WithField("err", err.Error()).Error("error generating jwt token for given userId")
 	}
 	return token, err
 }
 
 func (cs *UserOps) AddVenue(ctx context.Context, venue *db.Venue) error {
-
 	err := cs.storer.AddVenue(ctx, venue)
 	return err
 }
 
 func (cs *UserOps) GetAllVenues(ctx context.Context) ([]*db.Venue, error) {
 	venues, err := cs.storer.GetAllVenues(ctx)
-	return venues, err
+	if err != nil {
+		return nil, errors.New("Error getting venues")
+	}
+	return venues, nil
 }
 
-func (cs *UserOps) GetVenue(ctx context.Context, name string) (*db.Venue, error) {
-	venue, err := cs.storer.GetVenue(ctx, name)
-	return venue, err
+func (cs *UserOps) GetVenue(ctx context.Context, id int) (*db.Venue, error) {
+	venue, err := cs.storer.GetVenue(ctx, id)
+	if err != nil {
+		return nil, errors.New("Error getting venue")
+	}
+	return venue, nil
 }
 
 func (cs *UserOps) UpdateVenue(ctx context.Context, venue *db.Venue, id int) error {
 	err := cs.storer.UpdateVenue(ctx, venue, id)
-	return err
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (cs *UserOps) DeleteVenue(ctx context.Context, id int) error {
 	err := cs.storer.DeleteVenue(ctx, id)
-	return err
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func (cs *UserOps) CheckAvailability(ctx context.Context, id int, date string) ([]*db.Slot, error) {
-	slots, err := cs.storer.CheckAvailability(ctx, id, date)
-	return slots, err
+func (cs *UserOps) CheckAvailability(ctx context.Context, venueId int, date string) ([]*db.Slot, error) {
+	slots, err := cs.storer.CheckAvailability(ctx, venueId, date)
+	if err != nil {
+		return nil, errors.New("Error checking availability")
+	}
+	return slots, nil
 }
 
-func (cs *UserOps) BookSlot(ctx context.Context, b *db.Booking) error {
-	err := cs.storer.BookSlot(ctx, b)
-	return err
+func (cs *UserOps) BookSlot(ctx context.Context, b *db.Booking) (float64,error) {
+	price, err := cs.storer.BookSlot(ctx, b)
+	if err != nil {
+		return 0.0, err
+	}
+	return price, nil
+
 }
 
 func (cs *UserOps) GetAllBookings(ctx context.Context, userId int) ([]*db.Booking, error) {
 	bookings, err := cs.storer.GetAllBookings(ctx, userId)
-	return bookings, err
+	if err != nil {
+		return nil, errors.New("Error getting bookings")
+	}
+	if len(bookings) == 0 {
+		return nil, errors.New("No bookings found")
+	}
+	return bookings, nil
 }
 
 func (cs *UserOps) GetBooking(ctx context.Context, id int) (*db.Booking, error) {
 	booking, err := cs.storer.GetBooking(ctx, id)
+	if err != nil {
+		return nil, errors.New("error: error getting booking")
+	}
 	return booking, err
 }
 
 func (cs *UserOps) CancelBooking(ctx context.Context, id int) error {
 	err := cs.storer.CancelBooking(ctx, id)
-	return err
+	if err != nil {
+		return errors.New("error: error cancelling booking")
+	}
+	return nil
+}
+func (cs *UserOps) CheckUser(ctx context.Context, email string, contact string) error {
+	flag, _ := cs.storer.CheckUser(ctx, email, contact)
+	if flag {
+		err := errors.New("error: user already exists")
+		return err
+	}
+	return nil
+}
+
+
+func (cs *UserOps) CheckVenue(ctx context.Context, name string, contact string, email string) error {
+	flag, err := cs.storer.CheckVenue(ctx, name, contact, email)
+	if flag {
+		err = errors.New("error: venue already exists")
+		return err
+	}
+	return nil 
 }

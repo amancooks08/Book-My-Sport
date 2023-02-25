@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
-	logger "github.com/sirupsen/logrus"
 )
 
 type Slot struct {
@@ -38,7 +37,6 @@ func generateSlots(db *sqlx.DB, venueID int, startTime string, endTime string, d
 		availability := "available"
 
 		if !slotExists {
-			logger.Info("Generating slot")
 			_, err := db.Exec("INSERT INTO slots (venue_id, start_time, end_time, status, date) VALUES ($1, $2, $3, $4, $5)", venueID, slotStart, slotEnd, availability, day)
 			if err != nil {
 				return err

@@ -11,19 +11,14 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func BookSlot(deps dependencies) http.HandlerFunc {
+func BookSlot(CustomerServices Services) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		// Check for the role
-		role := req.Context().Value("role").(string)
-		if role != "customer" {
-			http.Error(rw, "FORBIDDEN", http.StatusUnauthorized)
-			return
-		}
+
 		if req.Method != http.MethodPost {
 			rw.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-
+		// Get The userId from the JWT token
 		var booking db.Booking
 		err := json.NewDecoder(req.Body).Decode(&booking)
 		if err != nil {
@@ -31,14 +26,14 @@ func BookSlot(deps dependencies) http.HandlerFunc {
 			return
 		}
 		defer req.Body.Close()
-
+		booking.BookedBy, booking.BookedAt = GetUserVenueId(req, rw)
 		booking.BookingTime = time.Now().Format("2006-01-02 15:04:05.999999-07")
-		if booking.BookedBy == 0 || booking.BookedAt == 0 || booking.BookingDate < time.Now().Format("2006-01-02") || booking.BookingTime == "" {
+		if booking.BookingDate <= time.Now().Format("2006-01-02") || booking.BookingTime == "" || booking.StartTime == "" || booking.EndTime == "" || booking.Game == "" {
 			http.Error(rw, "Error : Please enter correct details.", http.StatusBadRequest)
 			return
 		}
 
-		err = deps.CustomerServices.BookSlot(req.Context(), &booking)
+		amount, err := CustomerServices.BookSlot(req.Context(), &booking)
 		if err != nil {
 			http.Error(rw, fmt.Sprintf("%s", err), http.StatusInternalServerError)
 			return
@@ -46,40 +41,38 @@ func BookSlot(deps dependencies) http.HandlerFunc {
 
 		type jsonResponse struct {
 			Reponse string
+			Amount  float64
 		}
 
-		response := jsonResponse{Reponse: "Booking successful."}
+		response := jsonResponse{Reponse: "Booking successful.", Amount: amount}
+		// rw.WriteHeader(http.StatusCreated)
 		rw.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(rw).Encode(response)
-		rw.WriteHeader(http.StatusCreated)
+
 	})
 }
 
 // Get all bookings for a user
 
-func GetAllBookings(deps dependencies) http.HandlerFunc {
+func GetAllBookings(CustomerServices Services) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		// Check for the role
-		role := req.Context().Value("role").(string)
-		if role != "customer" {
-			http.Error(rw, "FORBIDDEN", http.StatusUnauthorized)
-			return
-		}
+
 		if req.Method != http.MethodGet {
 			rw.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
 
-		vars := mux.Vars(req)
-		userID, err := strconv.Atoi(vars["user_id"])
-		if err != nil {
-			http.Error(rw, "Invalid user ID", http.StatusBadRequest)
-			return
-		}
+		userID, _ := GetUserVenueId(req, rw)
 
-		bookings, err := deps.CustomerServices.GetAllBookings(req.Context(), userID)
+		bookings, err := CustomerServices.GetAllBookings(req.Context(), userID)
 		if err != nil {
 			http.Error(rw, fmt.Sprintf("%s", err), http.StatusInternalServerError)
+			return
+		}
+		
+		// If bookings is empty
+		if len(bookings) == 0 {
+			http.Error(rw, "No bookings found", http.StatusNotFound)
 			return
 		}
 
@@ -96,14 +89,8 @@ func GetAllBookings(deps dependencies) http.HandlerFunc {
 
 // Get a Specific Booking
 
-func GetBooking(deps dependencies) http.HandlerFunc {
+func GetBooking(CustomerServices Services) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		// Check for the role
-		role := req.Context().Value("role").(string)
-		if role != "customer" {
-			http.Error(rw, "FORBIDDEN", http.StatusUnauthorized)
-			return
-		}
 
 		if req.Method != http.MethodGet {
 			rw.WriteHeader(http.StatusMethodNotAllowed)
@@ -117,7 +104,7 @@ func GetBooking(deps dependencies) http.HandlerFunc {
 			return
 		}
 
-		booking, err := deps.CustomerServices.GetBooking(req.Context(), bookingID)
+		booking, err := CustomerServices.GetBooking(req.Context(), bookingID)
 		if err != nil {
 			http.Error(rw, fmt.Sprintf("%s", err), http.StatusInternalServerError)
 			return
@@ -136,14 +123,8 @@ func GetBooking(deps dependencies) http.HandlerFunc {
 
 //Cancel Existing Booking
 
-func CancelBooking(deps dependencies) http.HandlerFunc {
+func CancelBooking(CustomerServices Services) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		// Check for the role
-		role := req.Context().Value("role").(string)
-		if role != "customer" {
-			http.Error(rw, "FORBIDDEN", http.StatusUnauthorized)
-			return
-		}
 
 		if req.Method != http.MethodDelete {
 			rw.WriteHeader(http.StatusMethodNotAllowed)
@@ -157,7 +138,7 @@ func CancelBooking(deps dependencies) http.HandlerFunc {
 			return
 		}
 
-		err = deps.CustomerServices.CancelBooking(req.Context(), bookingID)
+		err = CustomerServices.CancelBooking(req.Context(), bookingID)
 		if err != nil {
 			http.Error(rw, fmt.Sprintf("%s", err), http.StatusInternalServerError)
 			return

@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	logger "github.com/sirupsen/logrus"
 )
@@ -21,13 +22,11 @@ type User struct {
 type LoginResponse struct {
 	Id       int    `db:"id" json:"id"`
 	Password string `db:"password" json:"password"`
-	Role    string `db:"type" json:"type"`
+	Role     string `db:"type" json:"type"`
 }
 
 func (s *pgStore) RegisterUser(ctx context.Context, user *User) error {
-	sqlQuery := `INSERT INTO "user" (name, contact, email, password, city, state, type)
-    VALUES ($1, $2, $3, $4, $5, $6, $7) returning id`
-	err := s.db.QueryRow(sqlQuery, &user.Name, &user.Contact, &user.Email, &user.Password, &user.City, &user.State, &user.Type).Scan(&user.Id)
+	err := s.db.QueryRow(RegisterUserQuery, &user.Name, &user.Contact, &user.Email, &user.Password, &user.City, &user.State, &user.Type).Scan(&user.Id)
 	if err != nil {
 		logger.WithField("err", err.Error()).Error("Error registering customer")
 		return err
@@ -35,16 +34,27 @@ func (s *pgStore) RegisterUser(ctx context.Context, user *User) error {
 	return err
 }
 
+func (s *pgStore) CheckUser(ctx context.Context, email string, contact string) (bool, error) {
+	var flag bool
+	err := s.db.QueryRow(CheckUserQuery, &contact, &email).Scan(&flag)
+	if err != nil {
+
+		logger.WithField("err", err.Error()).Error("Error checking customer")
+		return false, err
+	}
+	fmt.Printf("flag: %v", flag)
+	return flag, err
+}
+
 func (s *pgStore) LoginUser(ctx context.Context, email string) (*LoginResponse, error) {
-	sqlQuery := `SELECT id, password, type FROM "user" WHERE email = $1 `
 	loginResponse := &LoginResponse{}
-	err := s.db.QueryRow(sqlQuery, &email).Scan(&loginResponse.Id, &loginResponse.Password, &loginResponse.Role)
+	err := s.db.QueryRow(LoginUserQuery, &email).Scan(&loginResponse.Id, &loginResponse.Password, &loginResponse.Role)
 	switch {
 	case err == sql.ErrNoRows:
-		logger.WithField("err", err.Error()).Error("No user with that Email Id exists.")
+		logger.WithField("err", err.Error()).Error("no user with that email id exists.")
 		return &LoginResponse{}, err
 	case err != nil:
-		logger.WithField("err", err.Error()).Error("Error logging in customer")
+		logger.WithField("err", err.Error()).Error("error logging in customer")
 		return &LoginResponse{}, err
 	}
 	return loginResponse, err
