@@ -33,7 +33,7 @@ func AddVenue(CustomerServices Services) http.HandlerFunc {
 			return
 		}
 
-		if venue.Name == "" || venue.Address == "" || venue.City == "" || venue.State == "" {
+		if venue.Name == "" || venue.Address == "" || venue.City == "" || venue.State == "" || len(venue.Games) == 0 {
 			http.Error(rw, "Invalid request payload", http.StatusBadRequest)
 			return
 		}
@@ -136,7 +136,7 @@ func CheckAvailability(CustomerServices Services) http.HandlerFunc {
 			http.Error(rw, "Invalid date format", http.StatusBadRequest)
 			return
 		}
-		if date.After(time.Now().Truncate(24 * time.Hour)) || date.Equal(time.Now().Truncate(24 * time.Hour)) {
+		if date.After(time.Now().Truncate(24*time.Hour)) || date.Equal(time.Now().Truncate(24*time.Hour)) {
 			availabileSlots, err := CustomerServices.CheckAvailability(req.Context(), venueID, date.Format("2006-01-02"))
 			if err != nil {
 				http.Error(rw, fmt.Sprintf("%s", err), http.StatusInternalServerError)

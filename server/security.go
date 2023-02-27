@@ -54,9 +54,9 @@ func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
             return
         }
 
-        // Check if the user has the "admin" role to access admin routes
-        if strings.HasPrefix(req.URL.Path, "/admin") {
-            if role != "admin" {
+        // Check if the user has the "venue_owner" role to access venue_owner routes
+        if strings.HasPrefix(req.URL.Path, "/venue_owner") {
+            if role != "venue_owner" {
                 http.Error(rw, "Unauthorized", http.StatusForbidden)
                 return
             }
@@ -65,6 +65,14 @@ func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		// Check if the user has the "customer" role to access customer routes
         if strings.HasPrefix(req.URL.Path, "/customer") {
             if role != "customer" {
+                http.Error(rw, "Forbidden", http.StatusForbidden)
+                return
+            }
+        }
+
+        // Check if it the user has any one of the roles then they can access the common routes
+        if strings.HasPrefix(req.URL.Path, "/user") {
+            if role != "venue_owner" && role != "customer" {
                 http.Error(rw, "Forbidden", http.StatusForbidden)
                 return
             }

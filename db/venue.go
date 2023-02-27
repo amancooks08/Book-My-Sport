@@ -19,12 +19,13 @@ type Venue struct {
 	Opening string  `json:"opening_time"`
 	Closing string  `json:"closing_time"`
 	Price   float64 `json:"price"`
+	Games  []string `json:"games"`
 	Rating  float64 `json:"rating"`
 }
 
 // AddVenue adds a venue to the database
 func (s *pgStore) AddVenue(ctx context.Context, venue *Venue) error {
-	err := s.db.QueryRow(InsertVenueQuery, &venue.Name, &venue.Contact, &venue.City, &venue.State, &venue.Address, &venue.Email, &venue.Opening, &venue.Closing, &venue.Price, &venue.Rating).Scan(&venue.Id)
+	err := s.db.QueryRow(InsertVenueQuery, &venue.Name, &venue.Contact, &venue.City, &venue.State, &venue.Address, &venue.Email, &venue.Opening, &venue.Closing, &venue.Price, &venue.Games, &venue.Rating).Scan(&venue.Id)
 	if err == errors.New(`pq: duplicate key value violates unique constraint \"venue_name_key\"`) {
 		logger.WithField("err", err.Error()).Error("Error adding venue : Name already exists.")
 		return errors.New("error : name already exists")
@@ -54,8 +55,8 @@ func (s *pgStore) GetAllVenues(ctx context.Context) ([]*Venue, error) {
 	defer rows.Close()
 	venues := []*Venue{}
 	for rows.Next() {
-		venue := &Venue{Id: 0, Name: "", Contact: "", City: "", State: "", Address: "", Email: "", Opening: "", Closing: "", Price: 0, Rating: 0}
-		err = rows.Scan(&venue.Id, &venue.Name, &venue.Address, &venue.City, &venue.State, &venue.Contact, &venue.Email, &venue.Opening, &venue.Closing, &venue.Price, &venue.Rating)
+		venue := &Venue{Id: 0, Name: "", Contact: "", City: "", State: "", Address: "", Email: "", Opening: "", Closing: "", Price: 0, Games: []string{}, Rating: 0}
+		err = rows.Scan(&venue.Id, &venue.Name, &venue.Address, &venue.City, &venue.State, &venue.Contact, &venue.Email, &venue.Opening, &venue.Closing, &venue.Price, &venue.Games, &venue.Rating)
 		if err != nil {
 			logger.WithField("err", err.Error()).Error("Error fetching all venues")
 			return nil, err
@@ -89,7 +90,7 @@ func (s *pgStore) GetVenue(ctx context.Context, id int) (*Venue, error) {
 	}
 	defer rows.Close()
 	for rows.Next() {
-		err = rows.Scan(&venue.Id, &venue.Name, &venue.Address, &venue.City, &venue.State, &venue.Contact, &venue.Email, &venue.Opening, &venue.Closing, &venue.Price, &venue.Rating)
+		err = rows.Scan(&venue.Id, &venue.Name, &venue.Address, &venue.City, &venue.State, &venue.Contact, &venue.Email, &venue.Opening, &venue.Closing, &venue.Price, &venue.Games, &venue.Rating)
 		if err != nil {
 			logger.WithField("err", err.Error()).Error("Error fetching venue")
 			return nil, err
@@ -100,7 +101,7 @@ func (s *pgStore) GetVenue(ctx context.Context, id int) (*Venue, error) {
 
 // UpdateVenue updates a venue in the database
 func (s *pgStore) UpdateVenue(ctx context.Context, venue *Venue, id int) error {
-	_, err := s.db.Exec(UpdateVenueQuery, &venue.Name, &venue.Contact, &venue.City, &venue.State, &venue.Address, &venue.Opening, &venue.Closing, &venue.Price, &venue.Rating, &id)
+	_, err := s.db.Exec(UpdateVenueQuery, &venue.Name, &venue.Contact, &venue.City, &venue.State, &venue.Address, &venue.Opening, &venue.Closing, &venue.Price, venue.Games, &venue.Rating, &id)
 	if err != nil {
 		logger.WithField("err", err.Error()).Error("Error updating venue")
 		return err

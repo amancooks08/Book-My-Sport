@@ -6,4 +6,4 @@ APP_PORT: "33001"
 #DB_NAME: "dbname"
 
 # Postgres
-DB_URI: "postgresql://postgres:Aman@123@localhost:5432/postgres?sslmode=disable"
+DB_URI: "postgresql://postgres:postgres@localhost:5432/book_my_sport?sslmode=disable"

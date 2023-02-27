@@ -38,6 +38,7 @@ const (
 	UpdateVenueQuery     = `UPDATE "venue" SET name = $1, contact = $2, city = $3, state = $4, address = $5, opening_time = $6, closing_time = $7, price = $8, rating = $9 WHERE id = $10`
 	DeleteVenueQuery     = `DELETE FROM "venue" WHERE id = $1`
 	GetVenueTimingsQuery = `SELECT opening_time, closing_time FROM "venue" WHERE id = $1`
+	CheckGameQuery = `SELECT 1 WHERE $1 = ANY(games::varchar[])`
 
 	// Slot Queries
 	CheckAvailabilityQuery         = `"SELECT id, venue_id, start_time, end_time, date FROM "slots" WHERE venue_id = $1 date = $2 AND status = 'available'`

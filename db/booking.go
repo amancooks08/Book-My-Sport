@@ -17,7 +17,7 @@ type Booking struct {
 	BookingTime string  `json:"booking_time"`
 	StartTime   string  `json:"start_time"`
 	EndTime     string  `json:"end_time"`
-	Game        string  `json:"game"`
+	Game       	string `json:"game"`
 	AmountPaid  float64 `json:"amount"`
 }
 
@@ -49,6 +49,14 @@ func (s *pgStore) BookSlot(ctx context.Context, b *Booking) (float64, error) {
 	}
 	slots = et - st
 
+	// Check if the game is present at the venue or not
+	var game bool
+	err = s.db.QueryRow(CheckGameQuery, &b.Game, &b.BookedAt).Scan(&game)
+	if err != nil && err != sql.ErrNoRows{
+		logger.WithField("err", err.Error()).Error("error checking game")
+		return 0, errors.New("error checking game")
+	}
+	
 	// Calculate Amount as a double value
 	amount := float64(price * slots)
 	var flag bool
@@ -57,7 +65,10 @@ func (s *pgStore) BookSlot(ctx context.Context, b *Booking) (float64, error) {
 		logger.WithField("err", err.Error()).Error("error checking slot status")
 		return 0, errors.New("error checking slot status")
 	}
-	if flag {
+	if !game {
+		return 0, errors.New("error: game not available at this venue")
+	}
+	if flag{
 		//Insert the booking details in the booking table
 		_, err = s.db.Exec(BookSlotQuery, &b.BookedBy, &b.BookedAt, &b.BookingDate, &b.BookingTime, &b.StartTime, &b.EndTime, &b.Game, &amount)
 		if err != nil {

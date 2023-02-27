@@ -33,9 +33,9 @@ func RegisterCustomer(CustomerServices Services) http.HandlerFunc {
 	})
 }
 
-func RegisterAdmin(CustomerServices Services) http.HandlerFunc {
+func RegisterVenueOwner(CustomerServices Services) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		registerUser(rw, req, CustomerServices, "admin")
+		registerUser(rw, req, CustomerServices, "venue_owner")
 	})
 }
 
