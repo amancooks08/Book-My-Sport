@@ -29,6 +29,7 @@ type Venue struct {
 	State   string    `json:"state"`
 	Address string    `json:"address"`
 	Email   string    `json:"email"`
+	Games   []string  `json:"games"`
 }
 
 type Booking struct {

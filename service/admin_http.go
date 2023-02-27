@@ -41,7 +41,7 @@ func AddVenue(CustomerServices Services) http.HandlerFunc {
 		if validateContact(venue.Contact) && validateEmail(venue.Email) {
 			err := CustomerServices.AddVenue(req.Context(), &venue)
 			if err != nil {
-				http.Error(rw, fmt.Sprintf("%s1", err), http.StatusInternalServerError)
+				http.Error(rw, fmt.Sprintf("%s", err), http.StatusInternalServerError)
 				return
 			}
 		} else {
@@ -58,6 +58,7 @@ func AddVenue(CustomerServices Services) http.HandlerFunc {
 			State:   venue.State,
 			Contact: venue.Contact,
 			Email:   venue.Email,
+			Games:   venue.Games,
 		}
 		json_response, err := json.Marshal(response)
 		if err != nil {
@@ -105,9 +106,16 @@ func UpdateVenue(CustomerServices Services) http.HandlerFunc {
 				http.Error(rw, fmt.Sprintf("%s", err), http.StatusInternalServerError)
 				return
 			}
+			if err == nil {
+				responseMessage := "Venue updated successfully"
+				rw.Header().Add("Content-Type", "application/json")
+				rw.WriteHeader(http.StatusAccepted)
+				rw.Write([]byte(responseMessage))
+			}
+		} else {
+			http.Error(rw, "Invalid email or contact information.", http.StatusBadRequest)
+			return
 		}
-
-		rw.WriteHeader(http.StatusOK)
 	})
 }
 
@@ -180,6 +188,8 @@ func DeleteVenue(CustomerServices Services) http.HandlerFunc {
 			return
 		}
 
-		rw.WriteHeader(http.StatusOK)
+		responseMessage := "Venue deleted successfully"
+		rw.Header().Add("Content-Type", "application/json")
+		rw.Write([]byte(responseMessage))
 	})
 }

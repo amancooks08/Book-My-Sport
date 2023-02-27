@@ -30,12 +30,12 @@ const (
 	CheckUserQuery = `SELECT exists(SELECT 1 FROM "user" WHERE contact = $1 OR email = $2)`
 
 	// Venue Queries
-	InsertVenueQuery = `INSERT INTO "venue" (name, contact, city, state, address, email, opening_time, closing_time, price, rating)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) returning id`
+	InsertVenueQuery = `INSERT INTO "venue" (name, contact, city, state, address, email, opening_time, closing_time, price, games, rating)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) returning id`
 	CheckVenueQuery      = `SELECT exists(SELECT 1 FROM "venue" WHERE name = $1 OR contact = $2 OR email = $3)`
 	GetAllVenuesQuery    = `SELECT * FROM "venue"`
 	GetVenueQuery        = `SELECT * FROM "venue" WHERE id = $1`
-	UpdateVenueQuery     = `UPDATE "venue" SET name = $1, contact = $2, city = $3, state = $4, address = $5, opening_time = $6, closing_time = $7, price = $8, rating = $9 WHERE id = $10`
+	UpdateVenueQuery     = `UPDATE "venue" SET name = $1, contact = $2, city = $3, state = $4, address = $5, opening_time = $6, closing_time = $7, price = $8, games = $9, rating = $10 WHERE id = $11`
 	DeleteVenueQuery     = `DELETE FROM "venue" WHERE id = $1`
 	GetVenueTimingsQuery = `SELECT opening_time, closing_time FROM "venue" WHERE id = $1`
 	CheckGameQuery = `SELECT 1 WHERE $1 = ANY(games::varchar[])`
