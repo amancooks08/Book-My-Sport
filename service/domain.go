@@ -6,7 +6,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-type customerLogin struct {
+type UserLogin struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
@@ -54,3 +54,7 @@ type LoginResponse struct {
 	Token string
 	Message string
 }
+
+type dependencies struct {
+	CustomerServices Services
+} 

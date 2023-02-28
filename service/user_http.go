@@ -46,7 +46,7 @@ func LoginUser(CustomerServices Services) http.HandlerFunc {
 			return
 		}
 
-		var cu customerLogin
+		var cu UserLogin
 		err := json.NewDecoder(req.Body).Decode(&cu)
 		if err != nil {
 			http.Error(rw, "Invalid request payload", http.StatusBadRequest)

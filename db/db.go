@@ -38,24 +38,24 @@ const (
 	UpdateVenueQuery     = `UPDATE "venue" SET name = $1, contact = $2, city = $3, state = $4, address = $5, opening_time = $6, closing_time = $7, price = $8, games = $9, rating = $10 WHERE id = $11`
 	DeleteVenueQuery     = `DELETE FROM "venue" WHERE id = $1`
 	GetVenueTimingsQuery = `SELECT opening_time, closing_time FROM "venue" WHERE id = $1`
-	CheckGameQuery = `SELECT 1 WHERE $1 = ANY(games::varchar[])`
+	CheckGameQuery       = `SELECT exists(SELECT 1 FROM "venue" WHERE id = $1 AND $2 = ANY(games))`
 
 	// Slot Queries
 	CheckAvailabilityQuery         = `"SELECT id, venue_id, start_time, end_time, date FROM "slots" WHERE venue_id = $1 date = $2 AND status = 'available'`
 	InsertSlotQuery                = `INSERT INTO "slots" (venue_id, start_time, end_time, status, date) VALUES ($1, $2, $3, $4) RETURNING id`
 	DeleteSlotQuery                = `DELETE FROM "slots" WHERE venue_id = $1`
-	UpdateSlotStatusBookedQuery    = `UPDATE "slots" SET status = 'booked', booking_id = $1 WHERE start_time >= $2 AND end_time = $3 AND date = $4 AND venue_id = $5`
+	InsertBookedSlotsQuery         = `INSERT INTO "slots" (venue_id, start_time, end_time, status, date, booking_id) VALUES ($1, $2, $3, $4, $5, $6)`
 	UpdateSlotStatusAvailableQuery = `UPDATE "slots" SET status = 'available' WHERE booking_id = $1`
 	UpdateSlotBookingQuery         = `UPDATE "slots" SET booking_id = NULL WHERE booking_id = $1`
 	GetSlotsQuery                  = `SELECT id, venue_id, start_time, end_time, date FROM "slots" WHERE venue_id = $1 AND date = $2 AND status = 'available'`
-
+	GetBookedSlotsQuery            = `SELECT venue_id, date, start_time, end_time, FROM "slots" WHERE venue_id = $1 AND date = $2 AND status = 'booked'`
 	// Booking Queries
-	SelectPriceQuery    = `SELECT price FROM "venue" WHERE id = $1`
-	NumberOfSlotsQuery  = `SELECT COUNT(*) FROM "slots" WHERE booking_id = $1`
-	CheckSlotStatusQuery = `SELECT exists(SELECT 1 FROM "slots" WHERE venue_id = $1 AND start_time >= $2 AND end_time <= $3 AND date = $4 AND status = 'available')`
-	BookSlotQuery       = `INSERT INTO "booking" (booked_by, booked_at, booking_date, booking_time, start_time, end_time, game, amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
-	GetBookingQuery     = `SELECT * FROM "slots" WHERE id = $1`
-	GetAllBookingsQuery = `SELECT * FROM "booking" WHERE venue_id = $1`
-	CancelBookingQuery  = `DELETE FROM "booking" WHERE id = $1`
-	DeleteBookingQuery  = `DELETE FROM "booking" WHERE booked_at = $1`
+	SelectPriceQuery     = `SELECT price FROM "venue" WHERE id = $1`
+	NumberOfSlotsQuery   = `SELECT COUNT(*) FROM "slots" WHERE booking_id = $1`
+	CheckSlotStatusQuery = `SELECT COUNT(*) FROM "slots" WHERE venue_id = $1 AND start_time >= $2 AND end_time <= $3 AND date = $4 AND status = 'booked'`
+	BookSlotQuery        = `INSERT INTO "booking" (booked_by, booked_at, booking_date, booking_time, start_time, end_time, game, amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
+	GetBookingQuery      = `SELECT * FROM "slots" WHERE id = $1`
+	GetAllBookingsQuery  = `SELECT * FROM "booking" WHERE booked_by = $1`
+	CancelBookingQuery   = `DELETE FROM "booking" WHERE id = $1`
+	DeleteBookingQuery   = `DELETE FROM "booking" WHERE booked_at = $1`
 )

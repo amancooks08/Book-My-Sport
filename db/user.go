@@ -3,7 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
-	"fmt"
+	"errors"
 
 	logger "github.com/sirupsen/logrus"
 )
@@ -29,9 +29,9 @@ func (s *pgStore) RegisterUser(ctx context.Context, user *User) error {
 	err := s.db.QueryRow(RegisterUserQuery, &user.Name, &user.Contact, &user.Email, &user.Password, &user.City, &user.State, &user.Type).Scan(&user.Id)
 	if err != nil {
 		logger.WithField("err", err.Error()).Error("Error registering customer")
-		return err
+		return errors.New("error registering customer")
 	}
-	return err
+	return nil
 }
 
 func (s *pgStore) CheckUser(ctx context.Context, email string, contact string) (bool, error) {
@@ -40,10 +40,9 @@ func (s *pgStore) CheckUser(ctx context.Context, email string, contact string) (
 	if err != nil {
 
 		logger.WithField("err", err.Error()).Error("Error checking customer")
-		return false, err
+		return false, errors.New("error checking customer")
 	}
-	fmt.Printf("flag: %v", flag)
-	return flag, err
+	return flag, nil
 }
 
 func (s *pgStore) LoginUser(ctx context.Context, email string) (*LoginResponse, error) {
@@ -52,10 +51,10 @@ func (s *pgStore) LoginUser(ctx context.Context, email string) (*LoginResponse, 
 	switch {
 	case err == sql.ErrNoRows:
 		logger.WithField("err", err.Error()).Error("no user with that email id exists.")
-		return &LoginResponse{}, err
+		return &LoginResponse{}, errors.New("no user with that email id exists.")
 	case err != nil:
 		logger.WithField("err", err.Error()).Error("error logging in customer")
-		return &LoginResponse{}, err
+		return &LoginResponse{}, errors.New("error logging in customer")
 	}
-	return loginResponse, err
+	return loginResponse, nil
 }

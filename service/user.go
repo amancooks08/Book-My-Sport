@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-
+	logger "github.com/sirupsen/logrus"
 	db "github.com/amancooks08/BookMySport/db"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
@@ -123,24 +123,21 @@ func GetUserVenueId(req *http.Request, rw http.ResponseWriter) (int, int) {
 	}
 	// Get the claims from the token
 	claims, ok := token.Claims.(jwt.MapClaims)
+	if !(ok && token.Valid) {
+		http.Error(rw, "Token Invalid", http.StatusUnauthorized)
+		return 0, 0
+	}
+
+	user_id, ok := claims["user_id"].(float64)
 	if !ok || !token.Valid {
 		http.Error(rw, "Unauthorized", http.StatusUnauthorized)
 		return 0, 0
 	}
-
-	user_id, ok := claims["user_id"].(int)
-	if !ok || !token.Valid{
-		http.Error(rw, "Unauthorized", http.StatusUnauthorized)
-		return 0, 0
-	}
-
-	fmt.Println("user_id: ", user_id)
-
 	vars := mux.Vars(req)
 	venueID, err := strconv.Atoi(vars["venue_id"])
 	if err != nil {
-		http.Error(rw, fmt.Sprint(err)+": Invalid ID", http.StatusBadRequest)
-		return user_id, 0
+		logger.WithField("error", err).Error("Error while parsing venue_id")
+		return int(user_id), 0
 	}
-	return user_id, venueID
+	return int(user_id), venueID
 }

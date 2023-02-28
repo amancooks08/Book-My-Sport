@@ -90,6 +90,7 @@ func (cs *UserOps) GetAllVenues(ctx context.Context) ([]*db.Venue, error) {
 func (cs *UserOps) GetVenue(ctx context.Context, id int) (*db.Venue, error) {
 	venue, err := cs.storer.GetVenue(ctx, id)
 	if err != nil {
+		logger.WithField("err", err.Error()).Error("error getting venue")
 		return nil, errors.New("Error getting venue")
 	}
 	return venue, nil
@@ -119,7 +120,7 @@ func (cs *UserOps) CheckAvailability(ctx context.Context, venueId int, date stri
 	return slots, nil
 }
 
-func (cs *UserOps) BookSlot(ctx context.Context, b *db.Booking) (float64,error) {
+func (cs *UserOps) BookSlot(ctx context.Context, b *db.Booking) (float64, error) {
 	price, err := cs.storer.BookSlot(ctx, b)
 	if err != nil {
 		return 0.0, err

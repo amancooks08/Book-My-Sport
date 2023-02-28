@@ -1,84 +1,108 @@
 package service
 
-// import (
-// 	"errors"
-// 	"github.com/amancooks08/BookMySport/db"
-// 	"net/http"
-// 	"net/http/httptest"
-// 	"strings"
-// 	"testing"
+import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
 
-// 	"github.com/gorilla/mux"
-// 	"github.com/stretchr/testify/assert"
-// 	"github.com/stretchr/testify/mock"
-// 	"github.com/stretchr/testify/suite"
-// )
+	
+	"github.com/amancooks08/BookMySport/mocks"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
+)
 
-// // Define the suite, and absorb the built-in basic suite
-// // functionality from testify - including assertion methods.
-// type UsersHandlerTestSuite struct {
-// 	suite.Suite
+type UserHandlerTestSuite struct {
+	suite.Suite
+	service *mocks.Services
+}
 
-// 	dbMock *db.DBMockStore
+func TestUserHandlerTestSuite(t *testing.T) {
+	suite.Run(t, new(UserHandlerTestSuite))
+}
+
+func (suite *UserHandlerTestSuite) SetupTest() {
+	suite.service = &mocks.Services{}
+}
+
+func (suite *UserHandlerTestSuite) TearDownTest() {
+	suite.service.AssertExpectations(suite.T())
+}
+
+// func (suite *UserHandlerTestSuite) TestPingHandler() {
+// 	rw := httptest.NewRecorder()
+// 	req := httptest.NewRequest(http.MethodGet, "/ping", nil)
+
+// 	suite.service.On("Ping", mock.Anything).Return(nil)
+
+// 	PingHandler(rw, req)
+
+// 	suite.Equal(http.StatusOK, rw.Code)
+
+// 	suite.service.AssertExpectations(suite.T())
+
 // }
 
-// func (suite *UsersHandlerTestSuite) SetupTest() {
-// 	suite.dbMock = &db.DBMockStore{}
+// func (suite *UserHandlerTestSuite) TestRegisterCustomer() {
+// 	rw := httptest.NewRecorder()
+// 	req := httptest.NewRequest(http.MethodPost, "/register", nil)
+
+// 	suite.service.On("RegisterCustomer", mock.Anything).Return(nil)
+
+// 	RegisterCustomer(rw, req)
+
+// 	suite.Equal(http.StatusOK, rw.Code)
+
+// 	suite.service.AssertExpectations(suite.T())
+
 // }
 
-// func TestExampleTestSuite(t *testing.T) {
-// 	suite.Run(t, new(UsersHandlerTestSuite))
-// }
+func (suite *UserHandlerTestSuite) TestLoginUser() {
+	t := suite.T()
+	t.Run("when valid user request is made", func(t *testing.T) {
+		reqBody := `{"email":"cu1@gmail.com","password":"Password@123"}`
+		req := httptest.NewRequest(http.MethodPost, "/user/login", strings.NewReader(reqBody))
+		rw := httptest.NewRecorder()
+		ctx := req.Context()
 
-// func (suite *UsersHandlerTestSuite) TestListUsersSuccess() {
-// 	suite.dbMock.On("ListUsers", mock.Anything).Return(
-// 		[]db.User{
-// 			{Name: "test-user", Age: 18},
-// 		},
-// 		nil,
-// 	)
+		requestBody := UserLogin{
+			Email:    "cu1@gmail.com",
+			Password: "Password@123",
+		}
 
-// 	recorder := makeHTTPCall(
-// 		http.MethodGet,
-// 		"/users",
-// 		"",
-// 		listUsersHandler(dependencies{Store: suite.dbMock}),
-// 	)
+		responseBody := LoginResponse{
+			Token:   "token",
+			Message: "Login Successful",
+		}
 
-// 	assert.Equal(suite.T(), http.StatusOK, recorder.Code)
-// 	assert.Equal(suite.T(), `[{"full_name":"test-user","age":18}]`, recorder.Body.String())
-// 	suite.dbMock.AssertExpectations(suite.T())
-// }
+		suite.service.On("LoginUser", ctx, requestBody).Return("token", nil)
+		deps := dependencies{
+			CustomerServices: suite.service,
+		}
 
-// func (suite *UsersHandlerTestSuite) TestListUsersWhenDBFailure() {
-// 	suite.dbMock.On("ListUsers", mock.Anything).Return(
-// 		[]db.User{},
-// 		errors.New("error fetching user records"),
-// 	)
+		exp, _ := json.Marshal(responseBody)
 
-// 	recorder := makeHTTPCall(
-// 		http.MethodGet,
-// 		"/users",
-// 		"",
-// 		listUsersHandler(Dependencies{Store: suite.dbMock}),
-// 	)
+		got := LoginUser(deps)
+		got.ServeHTTP(rw, req)
 
-// 	assert.Equal(suite.T(), http.StatusInternalServerError, recorder.Code)
-// 	suite.dbMock.AssertExpectations(suite.T())
-// }
+		assert.Equal(t, http.StatusOK, rw.Code)
+		assert.Equal(t, string(exp), rw.Body.String())
+	})
+}
 
-// func makeHTTPCall(method, path, body string, handlerFunc http.HandlerFunc) (recorder *httptest.ResponseRecorder) {
-// 	// create a http request using the given parameters
-// 	req, _ := http.NewRequest(method, path, strings.NewReader(body))
-
-// 	// test recorder created for capturing api responses
-// 	recorder = httptest.NewRecorder()
-
-// 	// create a router to serve the handler in test with the prepared request
-// 	router := mux.NewRouter()
-// 	router.HandleFunc(path, handlerFunc).Methods(method)
-
-// 	// serve the request and write the response to recorder
-// 	router.ServeHTTP(recorder, req)
-// 	return
-// }
+func TestPingHandler(t *testing.T) {
+	type args struct {
+		rw  http.ResponseWriter
+		req *http.Request
+	}
+	tests := []struct {
+		name string
+		args args
+	}{}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			PingHandler(tt.args.rw, tt.args.req)
+		})
+	}
+}

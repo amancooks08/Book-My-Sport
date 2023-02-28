@@ -22,19 +22,19 @@ func AddVenue(CustomerServices Services) http.HandlerFunc {
 		var venue db.Venue
 		err := json.NewDecoder(req.Body).Decode(&venue)
 		if err != nil {
-			http.Error(rw, "Invalid request payload", http.StatusBadRequest)
+			http.Error(rw, "invalid request payload", http.StatusBadRequest)
 			return
 		}
 		defer req.Body.Close()
 
 		err = CustomerServices.CheckVenue(req.Context(), venue.Name, venue.Contact, venue.Email)
 		if err != nil {
-			http.Error(rw, fmt.Sprintf("%s", err), http.StatusInternalServerError)
+			http.Error(rw, "error checking venue", http.StatusInternalServerError)
 			return
 		}
 
 		if venue.Name == "" || venue.Address == "" || venue.City == "" || venue.State == "" || len(venue.Games) == 0 {
-			http.Error(rw, "Invalid request payload", http.StatusBadRequest)
+			http.Error(rw, "invalid request payload", http.StatusBadRequest)
 			return
 		}
 
@@ -45,7 +45,7 @@ func AddVenue(CustomerServices Services) http.HandlerFunc {
 				return
 			}
 		} else {
-			http.Error(rw, "Invalid request payload", http.StatusBadRequest)
+			http.Error(rw, "invalid request payload", http.StatusBadRequest)
 			return
 		}
 
@@ -62,7 +62,7 @@ func AddVenue(CustomerServices Services) http.HandlerFunc {
 		}
 		json_response, err := json.Marshal(response)
 		if err != nil {
-			http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
+			http.Error(rw, "failed to marshal response", http.StatusInternalServerError)
 			return
 		}
 
@@ -85,35 +85,35 @@ func UpdateVenue(CustomerServices Services) http.HandlerFunc {
 		var venue db.Venue
 		err := json.NewDecoder(req.Body).Decode(&venue)
 		if err != nil {
-			http.Error(rw, "Invalid request payload", http.StatusBadRequest)
+			http.Error(rw, "invalid request payload", http.StatusBadRequest)
 			return
 		}
 		defer req.Body.Close()
 		vars := mux.Vars(req)
 		venueID, err := strconv.Atoi(vars["venue_id"])
 		if err != nil {
-			http.Error(rw, fmt.Sprint(err)+": Invalid ID", http.StatusBadRequest)
+			http.Error(rw, "error: invalid ID", http.StatusBadRequest)
 			return
 		}
 		if venue.Name == "" || venue.Address == "" || venue.City == "" || venue.State == "" {
-			http.Error(rw, "Invalid request payload", http.StatusBadRequest)
+			http.Error(rw, "invalid request payload", http.StatusBadRequest)
 			return
 		}
 
 		if validateContact(venue.Contact) && validateEmail(venue.Email) {
 			err := CustomerServices.UpdateVenue(req.Context(), &venue, venueID)
 			if err != nil {
-				http.Error(rw, fmt.Sprintf("%s", err), http.StatusInternalServerError)
+				http.Error(rw, "error: updating venue", http.StatusInternalServerError)
 				return
 			}
 			if err == nil {
-				responseMessage := "Venue updated successfully"
+				responseMessage := "venue updated successfully"
 				rw.Header().Add("Content-Type", "application/json")
 				rw.WriteHeader(http.StatusAccepted)
 				rw.Write([]byte(responseMessage))
 			}
 		} else {
-			http.Error(rw, "Invalid email or contact information.", http.StatusBadRequest)
+			http.Error(rw, "invalid email or contact information.", http.StatusBadRequest)
 			return
 		}
 	})
@@ -136,12 +136,12 @@ func CheckAvailability(CustomerServices Services) http.HandlerFunc {
 		// Check if date is present or not
 		var date time.Time
 		if req.URL.Query().Get("date") == "" {
-			http.Error(rw, "Please enter date if not entered or correct it if not added properly.", http.StatusBadRequest)
+			http.Error(rw, "please enter date if not entered or correct it if not added properly.", http.StatusBadRequest)
 			return
 		}
 		date, err = time.Parse("2006-01-02", req.URL.Query().Get("date"))
 		if err != nil {
-			http.Error(rw, "Invalid date format", http.StatusBadRequest)
+			http.Error(rw, "invalid date format", http.StatusBadRequest)
 			return
 		}
 		if date.After(time.Now().Truncate(24*time.Hour)) || date.Equal(time.Now().Truncate(24*time.Hour)) {
@@ -153,14 +153,14 @@ func CheckAvailability(CustomerServices Services) http.HandlerFunc {
 
 			respBytes, err := json.Marshal(availabileSlots)
 			if err != nil {
-				http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
+				http.Error(rw, "failed to marshal response", http.StatusInternalServerError)
 				return
 			}
 
 			rw.Header().Add("Content-Type", "application/json")
 			rw.Write(respBytes)
 		} else {
-			http.Error(rw, "Invalid Date - Please selct an upcoming date.", http.StatusBadRequest)
+			http.Error(rw, "invalid date - please selct an upcoming date.", http.StatusBadRequest)
 			return
 		}
 	})
@@ -188,7 +188,7 @@ func DeleteVenue(CustomerServices Services) http.HandlerFunc {
 			return
 		}
 
-		responseMessage := "Venue deleted successfully"
+		responseMessage := "venue deleted successfully"
 		rw.Header().Add("Content-Type", "application/json")
 		rw.Write([]byte(responseMessage))
 	})

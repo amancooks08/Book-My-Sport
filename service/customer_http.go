@@ -26,10 +26,26 @@ func BookSlot(CustomerServices Services) http.HandlerFunc {
 			return
 		}
 		defer req.Body.Close()
-		booking.BookedBy, booking.BookedAt = GetUserVenueId(req, rw)
+		booking.CustomerId, booking.VenueId = GetUserVenueId(req, rw)
 		booking.BookingTime = time.Now().Format("2006-01-02 15:04:05.999999-07")
-		if booking.BookingDate <= time.Now().Format("2006-01-02") || booking.BookingTime == "" || booking.StartTime == "" || booking.EndTime == "" || booking.Game == "" {
-			http.Error(rw, "Error : Please enter correct details.", http.StatusBadRequest)
+		date, err := time.Parse("2006-01-02", booking.BookingDate)
+		if err != nil {
+			http.Error(rw, "Error : Please enter a valid Date.", http.StatusBadRequest)
+			return
+		}
+
+		if date.Before(time.Now().Truncate(24 * time.Hour)) {
+			http.Error(rw, "Error : Please enter a valid Date.", http.StatusBadRequest)
+			return
+		}
+
+		if booking.StartTime >= booking.EndTime || booking.StartTime == "" || booking.EndTime == "" {
+			http.Error(rw, "Error : Please enter correct time details.", http.StatusBadRequest)
+			return
+		}
+
+		if booking.Game == "" {
+			http.Error(rw, "Error : Please enter correct game details.", http.StatusBadRequest)
 			return
 		}
 
@@ -69,7 +85,7 @@ func GetAllBookings(CustomerServices Services) http.HandlerFunc {
 			http.Error(rw, fmt.Sprintf("%s", err), http.StatusInternalServerError)
 			return
 		}
-		
+
 		// If bookings is empty
 		if len(bookings) == 0 {
 			http.Error(rw, "No bookings found", http.StatusNotFound)
