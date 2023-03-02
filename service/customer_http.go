@@ -26,7 +26,7 @@ func BookSlot(CustomerServices Services) http.HandlerFunc {
 			return
 		}
 		defer req.Body.Close()
-		booking.CustomerId, booking.VenueId = GetUserVenueId(req, rw)
+		booking.CustomerID, booking.VenueID = GetUserVenueId(req, rw)
 		booking.BookingTime = time.Now().Format("2006-01-02 15:04:05.999999-07")
 		date, err := time.Parse("2006-01-02", booking.BookingDate)
 		if err != nil {

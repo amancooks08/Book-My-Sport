@@ -51,7 +51,7 @@ func AddVenue(CustomerServices Services) http.HandlerFunc {
 
 		// Write the response
 		response := &Venue{
-			Id:      venue.Id,
+			Id:      venue.ID,
 			Name:    venue.Name,
 			Address: venue.Address,
 			City:    venue.City,

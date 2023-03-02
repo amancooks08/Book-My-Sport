@@ -30,8 +30,7 @@ func generateSlots(db *sqlx.DB, venueID int, startTime string, endTime string, d
 			return errors.New("error checking if slot exists")
 		}
 
-		availability := "booked"
-
+		const availability = "booked"
 		if !slotExists {
 			_, err := db.Exec("INSERT INTO slots (venue_id, start_time, end_time, status, date, booking_id) VALUES ($1, $2, $3, $4, $5, $6)", venueID, slotStart, slotEnd, availability, day, bookingId)
 			if err != nil {

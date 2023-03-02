@@ -58,3 +58,7 @@ type LoginResponse struct {
 type dependencies struct {
 	CustomerServices Services
 } 
+
+type Message struct {
+	Message string
+}

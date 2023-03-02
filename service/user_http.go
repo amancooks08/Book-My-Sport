@@ -72,18 +72,18 @@ func LoginUser(CustomerServices Services) http.HandlerFunc {
 				}
 				respBytes, err := json.Marshal(response)
 				if err != nil {
-					http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
+					http.Error(rw, "failed to marshal response", http.StatusInternalServerError)
 					return
 				}
 				rw.Header().Add("Content-Type", "application/json")
 				rw.Write(respBytes)
 			} else {
-				http.Error(rw, "Invalid credentials", http.StatusUnauthorized)
+				http.Error(rw, "error: invalid credentials", http.StatusUnauthorized)
 				return
 			}
 
 		} else {
-			http.Error(rw, "Invalid request payload", http.StatusBadRequest)
+			http.Error(rw, "invalid request payload", http.StatusBadRequest)
 			return
 		}
 

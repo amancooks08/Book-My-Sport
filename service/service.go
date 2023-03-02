@@ -64,14 +64,15 @@ func (cs *UserOps) RegisterUser(ctx context.Context, user *db.User) error {
 func (cs *UserOps) LoginUser(ctx context.Context, email string, password string) (string, error) {
 	loginResponse, err := cs.storer.LoginUser(ctx, email)
 	if bcrypt.CompareHashAndPassword([]byte(loginResponse.Password), []byte(password)) != nil {
-		return "", err
+		return "", errors.New("error: invalid credentials")
 	}
 
 	token, err := GenerateToken(loginResponse)
 	if err != nil {
 		logger.WithField("err", err.Error()).Error("error generating jwt token for given userId")
+		return "", errors.New("error: error generating jwt token for given userId")
 	}
-	return token, err
+	return token, nil
 }
 
 func (cs *UserOps) AddVenue(ctx context.Context, venue *db.Venue) error {
@@ -82,6 +83,7 @@ func (cs *UserOps) AddVenue(ctx context.Context, venue *db.Venue) error {
 func (cs *UserOps) GetAllVenues(ctx context.Context) ([]*db.Venue, error) {
 	venues, err := cs.storer.GetAllVenues(ctx)
 	if err != nil {
+		logger.WithField("err", err.Error()).Error("error getting venues")
 		return nil, errors.New("Error getting venues")
 	}
 	return venues, nil
