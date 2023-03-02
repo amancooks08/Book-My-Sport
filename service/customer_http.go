@@ -81,7 +81,7 @@ func GetAllBookings(CustomerServices Services) http.HandlerFunc {
 		userID, _ := GetUserVenueId(req, rw)
 
 		bookings, err := CustomerServices.GetAllBookings(req.Context(), userID)
-		if err != nil {
+		if err != nil && err.Error() == "No bookings found" {
 			http.Error(rw, fmt.Sprintf("%s", err), http.StatusInternalServerError)
 			return
 		}

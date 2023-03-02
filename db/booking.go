@@ -33,7 +33,7 @@ func (s *pgStore) BookSlot(ctx context.Context, b *Booking) (amount float64, err
 	err = s.db.QueryRow(SelectPriceQuery, &b.VenueID).Scan(&price)
 	if err != nil && err != sql.ErrNoRows {
 		logger.WithField("err", err.Error()).Error("error checking price")
-		return 0, ErrCheckPrice
+		return 0.0, ErrCheckPrice
 	}
 	// Calculate the number of Slots byfinding the  duration
 	st, _ := time.Parse("15:04:05", b.StartTime)
@@ -44,10 +44,10 @@ func (s *pgStore) BookSlot(ctx context.Context, b *Booking) (amount float64, err
 	err = s.db.QueryRow(CheckGameQuery, b.VenueID, b.Game).Scan(&game)
 	if err != nil && err != sql.ErrNoRows {
 		logger.WithField("err", err.Error()).Error("error checking game")
-		return 0, ErrCheckGame
+		return 0.0, ErrCheckGame
 	}
 	if !game {
-		return 0, ErrGameNotAvailable
+		return 0.0, ErrGameNotAvailable
 	}
 	// Calculate Amount as a double value
 	amount = float64(price * slots)
@@ -55,14 +55,13 @@ func (s *pgStore) BookSlot(ctx context.Context, b *Booking) (amount float64, err
 	err = s.db.QueryRow(CheckSlotStatusQuery, &b.VenueID, &b.StartTime, &b.EndTime, &b.BookingDate).Scan(&flag)
 	if err != nil {
 		logger.WithField("err", err.Error()).Error("error checking slot status")
-		return 0, ErrCheckSlotStatus
+		return 0.0, ErrCheckSlotStatus
 	}
 	fmt.Println(flag)
 	if flag == 0 {
 		//Insert the booking details in the booking table and return id
 		err = s.db.QueryRow(BookSlotQuery, &b.CustomerID, &b.VenueID, &b.BookingDate, &b.BookingTime, &b.StartTime, &b.EndTime, &b.Game, &amount).Scan(&b.Id)
 		if err != nil {
-
 			logger.WithField("err", err.Error()).Error("error booking slot")
 			return 0.0, ErrBookSlot
 		}
