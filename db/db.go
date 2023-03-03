@@ -16,7 +16,6 @@ type Storer interface {
 	DeleteVenue(context.Context, int) error
 	CheckAvailability(context.Context, int, string) ([]*Slot, error)
 	BookSlot(context.Context, *Booking) (float64, error)
-	CalculatePrice(context.Context, int, int, string, string) (int, error)
 	GetBooking(context.Context, int) (*Booking, error)
 	GetAllBookings(context.Context, int) ([]*Booking, error)
 	CancelBooking(context.Context, int) error
