@@ -48,8 +48,8 @@ const (
 	UpdateSlotBookingQuery         = `UPDATE "slots" SET booking_id = NULL WHERE booking_id = $1`
 	GetSlotsQuery                  = `SELECT id, venue_id, start_time, end_time, date FROM "slots" WHERE venue_id = $1 AND date = $2 AND status = 'available'`
 	GetBookedSlotsQuery            = `SELECT venue_id, date, start_time, end_time, FROM "slots" WHERE venue_id = $1 AND date = $2 AND status = 'booked'`
-	RemoveBookedSlotsQuery		   = `DELETE FROM "slots" WHERE booking_id = $1`
-	
+	RemoveBookedSlotsQuery         = `DELETE FROM "slots" WHERE booking_id = $1`
+
 	// Booking Queries
 	SelectPriceQuery     = `SELECT price FROM "venue" WHERE id = $1`
 	NumberOfSlotsQuery   = `SELECT COUNT(*) FROM "slots" WHERE booking_id = $1`

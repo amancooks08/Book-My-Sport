@@ -36,14 +36,19 @@ func registerUser(rw http.ResponseWriter, req *http.Request, CustomerServices Se
 	}
 
 	if user.Name == "" || user.Contact == "" || user.Email == "" || user.City == "" || user.State == "" || user.Password == "" {
-		http.Error(rw, "Invalid request payload", http.StatusBadRequest)
+		msg := Message{
+			Message: "please don't leave any field empty",
+		}
+		json_response, _ := json.Marshal(msg)
+
+		rw.WriteHeader(http.StatusBadRequest)
+		rw.Header().Add("Content-Type", "application/json")
+		rw.Write(json_response)
 		return
 	}
 
 	if validateContact(user.Contact) && validateEmail(user.Email) {
 
-		// Store the user in the database
-		// var cu *db.Customer
 		user.Type = userType
 		err = CustomerServices.RegisterUser(req.Context(), &user)
 		if err != nil {
@@ -60,7 +65,7 @@ func registerUser(rw http.ResponseWriter, req *http.Request, CustomerServices Se
 			Type:    userType,
 		}
 		// Send a successful response
-		// rw.Write([]byte("User registered successfully"))
+
 		json_response, err := json.Marshal(registerUserResponse)
 		if err != nil {
 			msg := Message{
@@ -76,7 +81,14 @@ func registerUser(rw http.ResponseWriter, req *http.Request, CustomerServices Se
 		rw.Header().Add("Content-Type", "application/json")
 		rw.Write(json_response)
 	} else {
-		http.Error(rw, "Invalid request payload", http.StatusBadRequest)
+		msg := Message{
+			Message: "invalid contact or email details.",
+		}
+		json_response, _ := json.Marshal(msg)
+
+		rw.WriteHeader(http.StatusBadRequest)
+		rw.Header().Add("Content-Type", "application/json")
+		rw.Write(json_response)
 		return
 	}
 }

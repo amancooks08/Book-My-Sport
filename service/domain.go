@@ -51,8 +51,8 @@ type Claims struct {
 }
 
 type LoginResponse struct {
-	Token   string   `json:"token"`
-	Message string	 `json:"message"`
+	Token   string `json:"token"`
+	Message string `json:"message"`
 }
 
 type dependencies struct {
@@ -60,10 +60,10 @@ type dependencies struct {
 }
 
 type Message struct {
-	Message string  `json:"message"`
+	Message string `json:"message"`
 }
 
 type BookingResponse struct {
-	Message string    `json:"message"`
-	Amount  float64   `json:"amount"`
+	Message string  `json:"message"`
+	Amount  float64 `json:"amount"`
 }

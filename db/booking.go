@@ -21,7 +21,7 @@ type Booking struct {
 	AmountPaid  float64 `json:"amount"`
 }
 
-func (s *pgStore) BookSlot(ctx context.Context, b *Booking) (float64, error) { 
+func (s *pgStore) BookSlot(ctx context.Context, b *Booking) (float64, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
 		logger.WithField("err", err.Error()).Error("error booking slot : Transaction Failed")

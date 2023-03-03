@@ -34,7 +34,7 @@ package service
 // 	type args struct {
 // 		ctx  context.Context
 // 		user *db.User
-// 	}	
+// 	}
 // 	tests := []struct {
 // 		name    string
 // 		args    args
@@ -74,7 +74,6 @@ package service
 // 					Role: "customer",
 // 				},
 // 			},
-
 
 // 		}
 

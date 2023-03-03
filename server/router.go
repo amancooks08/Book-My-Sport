@@ -3,8 +3,8 @@ package server
 import (
 	"net/http"
 
-	"github.com/gorilla/mux"
 	service "github.com/amancooks08/BookMySport/service"
+	"github.com/gorilla/mux"
 )
 
 /* The routing mechanism. Mux helps us define handler functions and the access methods */

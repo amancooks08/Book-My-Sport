@@ -29,23 +29,51 @@ func AddVenue(CustomerServices Services) http.HandlerFunc {
 
 		err = CustomerServices.CheckVenue(req.Context(), venue.Name, venue.Contact, venue.Email)
 		if err != nil {
-			http.Error(rw, "error checking venue", http.StatusInternalServerError)
+			msg := Message{
+				Message: fmt.Sprintf("%s", err),
+			}
+			json_response, _ := json.Marshal(msg)
+
+			rw.WriteHeader(http.StatusBadRequest)
+			rw.Header().Add("Content-Type", "application/json")
+			rw.Write(json_response)
 			return
 		}
 
 		if venue.Name == "" || venue.Address == "" || venue.City == "" || venue.State == "" || len(venue.Games) == 0 {
-			http.Error(rw, "invalid request payload", http.StatusBadRequest)
+			msg := Message{
+				Message: "please don't leave any field empty",
+			}
+			json_response, _ := json.Marshal(msg)
+
+			rw.WriteHeader(http.StatusBadRequest)
+			rw.Header().Add("Content-Type", "application/json")
+			rw.Write(json_response)
 			return
 		}
 
 		if validateContact(venue.Contact) && validateEmail(venue.Email) {
 			err := CustomerServices.AddVenue(req.Context(), &venue)
 			if err != nil {
-				http.Error(rw, fmt.Sprintf("%s", err), http.StatusInternalServerError)
+				msg := Message{
+					Message: "failed to add venue",
+				}
+
+				json_response, _ := json.Marshal(msg)
+				rw.WriteHeader(http.StatusInternalServerError)
+				rw.Header().Add("Content-Type", "application/json")
+				rw.Write(json_response)
 				return
 			}
 		} else {
-			http.Error(rw, "invalid request payload", http.StatusBadRequest)
+			msg := Message{
+				Message: "invalid email or contact",
+			}
+
+			json_response, _ := json.Marshal(msg)
+			rw.WriteHeader(http.StatusBadRequest)
+			rw.Header().Add("Content-Type", "application/json")
+			rw.Write(json_response)
 			return
 		}
 

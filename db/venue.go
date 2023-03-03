@@ -26,8 +26,6 @@ type Venue struct {
 	Rating  float64  `json:"rating"`
 }
 
-// ad: make custom errors
-
 // AddVenue adds a venue to the database
 func (s *pgStore) AddVenue(ctx context.Context, venue *Venue) error {
 	err := s.db.QueryRow(InsertVenueQuery, &venue.Name, &venue.Contact, &venue.City, &venue.State, &venue.Address, &venue.Email, &venue.Opening, &venue.Closing, &venue.Price, pq.Array(&venue.Games), &venue.Rating).Scan(&venue.ID)
