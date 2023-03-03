@@ -49,6 +49,7 @@ func (s *pgStore) AddVenue(ctx context.Context, venue *Venue) error {
 
 // GetAllVenues returns all the venues in the database
 func (s *pgStore) GetAllVenues(ctx context.Context) ([]*Venue, error) {
+	venues := []*Venue{}
 	rows, err := s.db.Query(GetAllVenuesQuery)
 	if err != nil && err == sql.ErrNoRows {
 		logger.WithField("err", err.Error()).Error("error : no venues found")
@@ -58,7 +59,6 @@ func (s *pgStore) GetAllVenues(ctx context.Context) ([]*Venue, error) {
 		return nil, ErrFetchingVenues
 	}
 	defer rows.Close()
-	venues := []*Venue{}
 	for rows.Next() {
 		venue := &Venue{ID: 0, Name: "", Contact: "", City: "", State: "", Address: "", Email: "", Opening: "", Closing: "", Price: 0, Games: []string{}, Rating: 0}
 		err = rows.Scan(&venue.ID, &venue.Name, &venue.Address, &venue.City, &venue.State, &venue.Contact, &venue.Email, &venue.Opening, &venue.Closing, &venue.Price, pq.Array(&venue.Games), &venue.Rating)
@@ -87,17 +87,20 @@ func (s *pgStore) CheckVenue(ctx context.Context, name string, contact string, e
 
 // GetVenue returns a venue with the given id
 func (s *pgStore) GetVenue(ctx context.Context, id int) (*Venue, error) {
-	venue := &Venue{}
 	rows, err := s.db.Query(GetVenueQuery, &id)
-	if err != nil {
-		logger.WithField("err", err.Error()).Error("Error getting venue")
-		return nil, ErrGettingVenue
+	if err != nil && err == sql.ErrNoRows {
+		logger.WithField("err", err.Error()).Error("error: invalid venue id")
+		return nil, ErrInvalidVID
+	} else if err != nil {
+		logger.WithField("err", err.Error()).Error("error fetching venue")
+		return nil, ErrFetchingVenue
 	}
 	defer rows.Close()
+	venue := &Venue{ID: 0, Name: "", Contact: "", City: "", State: "", Address: "", Email: "", Opening: "", Closing: "", Price: 0, Games: []string{}, Rating: 0}
 	for rows.Next() {
 		err = rows.Scan(&venue.ID, &venue.Name, &venue.Address, &venue.City, &venue.State, &venue.Contact, &venue.Email, &venue.Opening, &venue.Closing, &venue.Price, pq.Array(&venue.Games), &venue.Rating)
 		if err != nil {
-			logger.WithField("err", err.Error()).Error("Error fetching venue")
+			logger.WithField("err", err.Error()).Error("error fetching venue")
 			return nil, ErrFetchingVenue
 		}
 	}
@@ -152,7 +155,6 @@ func (s *pgStore) CheckAvailability(ctx context.Context, venueId int, date strin
 		logger.WithField("err", err.Error()).Error("Error getting venue opening and closing times")
 		return nil, ErrGetTimings
 	}
-	fmt.Println(exists)
 	if !exists {
 		// If slots don't exist, create them
 		currentTime, err := time.Parse("15:04:05", venueOpen[11:19])
@@ -184,7 +186,7 @@ func (s *pgStore) CheckAvailability(ctx context.Context, venueId int, date strin
 		bookedSlots := []*Slot{}
 		for rows.Next() {
 			slot := &Slot{VenueId: 0, Date: "", StartTime: "", EndTime: ""}
-			err = rows.Scan(&slot.VenueId, &slot.StartTime, &slot.EndTime, &slot.Date)
+			err = rows.Scan(&slot.VenueId, &slot.Date, &slot.StartTime, &slot.EndTime)
 			slot.Date = slot.Date[0:10]
 			slot.StartTime = slot.StartTime[11:16]
 			slot.EndTime = slot.EndTime[11:16]
@@ -212,6 +214,7 @@ func (s *pgStore) CheckAvailability(ctx context.Context, venueId int, date strin
 		}
 		for _, bookedSlot := range bookedSlots {
 			for i, slot := range slotList {
+				fmt.Println(slot.StartTime, bookedSlot.StartTime)
 				if slot.StartTime == bookedSlot.StartTime {
 					slotList = append(slotList[:i], slotList[i+1:]...)
 				}
@@ -219,24 +222,4 @@ func (s *pgStore) CheckAvailability(ctx context.Context, venueId int, date strin
 		}
 		return slotList, nil
 	}
-}
-
-// CalculatePrice calculates the price of a booking
-
-func (s *pgStore) CalculatePrice(ctx context.Context, venueId int, bookingId int, startTime string, endTime string) (int, error) {
-	var amount, price, slots int
-	err := s.db.QueryRow(SelectPriceQuery, &venueId, &startTime, &endTime).Scan(&price)
-	if err != nil {
-		logger.WithField("err", err.Error()).Error("Error calculating price")
-		return 0, ErrCalculatePrice
-	}
-
-	err = s.db.QueryRow(NumberOfSlotsQuery, &bookingId).Scan(&slots)
-	if err != nil {
-		logger.WithField("err", err.Error()).Error("Error calculating price")
-		return 0, ErrCalculatePrice
-	}
-
-	amount = price * slots
-	return amount, err
 }

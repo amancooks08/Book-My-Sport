@@ -14,10 +14,11 @@ var (
 	ErrEmailExists 		= errors.New("error: email already exists")
 
 	ErrAddingVenue 		= errors.New("error adding venue")
-	ErrNoVenues			= errors.New("error: no venue found")
+	ErrNoVenues			= errors.New("error: no venues found")
+	ErrNoVenue 			= errors.New("error: no venue found")
 	ErrFetchingVenues 	= errors.New("error fetching all venues")
 	ErrCheckVenue  		= errors.New("error checking venue")
-	ErrGettingVenue		= errors.New("error getting venue")
+	ErrInvalidVID		= errors.New("error: invalid venue id")
 	ErrFetchingVenue 	= errors.New("error fetching venue")
 	ErrUpdatingVenue 	= errors.New("error updating venue")
 	ErrDeletingVenue 	= errors.New("error deleting venue")

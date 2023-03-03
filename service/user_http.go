@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gorilla/mux"
+	db "github.com/amancooks08/BookMySport/db"
 	logger "github.com/sirupsen/logrus"
 )
 
@@ -67,7 +67,7 @@ func LoginUser(CustomerServices Services) http.HandlerFunc {
 			}
 			if token != "" {
 				response := &LoginResponse{
-					Token: token,
+					Token:   token,
 					Message: "Login Successful",
 				}
 				respBytes, err := json.Marshal(response)
@@ -78,7 +78,15 @@ func LoginUser(CustomerServices Services) http.HandlerFunc {
 				rw.Header().Add("Content-Type", "application/json")
 				rw.Write(respBytes)
 			} else {
-				http.Error(rw, "error: invalid credentials", http.StatusUnauthorized)
+				msg := Message{Message: "error: invalid credentials"}
+				respBytes, err := json.Marshal(msg)
+				if err != nil {
+					http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
+					return
+				}
+				rw.WriteHeader(http.StatusUnauthorized)
+				rw.Header().Add("Content-Type", "application/json")
+				rw.Write(respBytes)
 				return
 			}
 
@@ -86,9 +94,7 @@ func LoginUser(CustomerServices Services) http.HandlerFunc {
 			http.Error(rw, "invalid request payload", http.StatusBadRequest)
 			return
 		}
-
 	})
-
 }
 
 func GetAllVenues(CustomerServices Services) http.HandlerFunc {
@@ -103,7 +109,20 @@ func GetAllVenues(CustomerServices Services) http.HandlerFunc {
 			http.Error(rw, fmt.Sprintf("%s", err), http.StatusInternalServerError)
 			return
 		}
-		
+
+		if len(venues) == 0 {
+			msg := Message{Message: "no venues found"}
+			respBytes, err := json.Marshal(msg)
+			if err != nil {
+				http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
+				return
+			}
+			// Add not found status
+			rw.WriteHeader(http.StatusNotFound)
+			rw.Header().Add("Content-Type", "application/json")
+			rw.Write(respBytes)
+			return
+		}
 		respBytes, err := json.Marshal(venues)
 		if err != nil {
 			http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
@@ -121,17 +140,44 @@ func GetVenue(CustomerServices Services) http.HandlerFunc {
 			rw.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		vars := mux.Vars(req)
-		venueID, err := strconv.Atoi(vars["venue_id"])
-
-		if err != nil {
-			http.Error(rw, "Unable to parse VenueID", http.StatusBadRequest)
+		venueID, err := strconv.Atoi(req.URL.Query().Get("venue_id"))
+		if err != nil || venueID <= 0 {
+			msg := Message{Message: "invalid venue id"}
+			respBytes, err := json.Marshal(msg)
+			if err != nil {
+				http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
+				return
+			}
+			// Add not found status
+			rw.WriteHeader(http.StatusNotFound)
+			rw.Header().Add("Content-Type", "application/json")
+			rw.Write(respBytes)
 			return
 		}
-
 		venue, err := CustomerServices.GetVenue(req.Context(), venueID)
-		if err != nil {
-			http.Error(rw, fmt.Sprintf("%s", err), http.StatusInternalServerError)
+		if err != nil || err == db.ErrNoVenues {
+			msg := Message{Message: "no venue found"}
+			respBytes, err := json.Marshal(msg)
+			if err != nil {
+				http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
+				return
+			}
+			// Add not found status
+			rw.WriteHeader(http.StatusNotFound)
+			rw.Header().Add("Content-Type", "application/json")
+			rw.Write(respBytes)
+			return
+		} else if err != nil {
+			msg := Message{Message: err.Error()}
+			respBytes, err := json.Marshal(msg)
+			if err != nil {
+				http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
+				return
+			}
+			// Add not found status
+			rw.WriteHeader(http.StatusInternalServerError)
+			rw.Header().Add("Content-Type", "application/json")
+			rw.Write(respBytes)
 			return
 		}
 

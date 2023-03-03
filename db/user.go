@@ -8,8 +8,8 @@ import (
 )
 
 type User struct {
-	Id       int    `json:"id"` 
-	Name	 string `json:"name"`
+	ID       int    `json:"id"`
+	Name     string `json:"name"`
 	Contact  string `json:"contact"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
@@ -25,7 +25,7 @@ type LoginResponse struct {
 }
 
 func (s *pgStore) RegisterUser(ctx context.Context, user *User) error {
-	err := s.db.QueryRow(RegisterUserQuery, &user.Name, &user.Contact, &user.Email, &user.Password, &user.City, &user.State, &user.Type).Scan(&user.Id)
+	err := s.db.QueryRow(RegisterUserQuery, &user.Name, &user.Contact, &user.Email, &user.Password, &user.City, &user.State, &user.Type).Scan(&user.ID)
 	if err != nil {
 		logger.WithField("err", err.Error()).Error("Error registering customer")
 		return ErrRegisterUser
@@ -45,7 +45,7 @@ func (s *pgStore) CheckUser(ctx context.Context, email string, contact string) (
 }
 
 func (s *pgStore) LoginUser(ctx context.Context, email string) (*LoginResponse, error) {
-	loginResponse := &LoginResponse{}
+	var loginResponse = &LoginResponse{}
 	err := s.db.QueryRow(LoginUserQuery, &email).Scan(&loginResponse.Id, &loginResponse.Password, &loginResponse.Role)
 	switch {
 	case err == sql.ErrNoRows:

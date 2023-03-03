@@ -7,10 +7,11 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	logger "github.com/sirupsen/logrus"
+
 	db "github.com/amancooks08/BookMySport/db"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
+	logger "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -50,7 +51,7 @@ func registerUser(rw http.ResponseWriter, req *http.Request, CustomerServices Se
 			return
 		}
 		registerUserResponse := &User{
-			Id:      user.Id,
+			Id:      user.ID,
 			Name:    user.Name,
 			Contact: user.Contact,
 			Email:   user.Email,
@@ -62,7 +63,14 @@ func registerUser(rw http.ResponseWriter, req *http.Request, CustomerServices Se
 		// rw.Write([]byte("User registered successfully"))
 		json_response, err := json.Marshal(registerUserResponse)
 		if err != nil {
-			http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
+			msg := Message{
+				Message: "Failed to register user",
+			}
+			json_response, _ := json.Marshal(msg)
+
+			rw.WriteHeader(http.StatusInternalServerError)
+			rw.Header().Add("Content-Type", "application/json")
+			rw.Write(json_response)
 			return
 		}
 		rw.Header().Add("Content-Type", "application/json")

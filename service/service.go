@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"time"
 
@@ -94,10 +95,13 @@ func (cs *UserOps) GetAllVenues(ctx context.Context) ([]*db.Venue, error) {
 }
 
 func (cs *UserOps) GetVenue(ctx context.Context, id int) (*db.Venue, error) {
+	if id == 0 {
+		return nil, errors.New("invalid venue id")
+	}
 	venue, err := cs.storer.GetVenue(ctx, id)
-	if err != nil {
-		logger.WithField("err", err.Error()).Error("error getting venue")
-		return nil, errors.New("error getting venue")
+	if err != nil && err == sql.ErrNoRows {
+		logger.WithField("err", err.Error()).Error("no venue found")
+		return nil, errors.New("no venue found")
 	}
 	return venue, nil
 }
@@ -177,12 +181,11 @@ func (cs *UserOps) CheckUser(ctx context.Context, email string, contact string) 
 	return nil
 }
 
-
 func (cs *UserOps) CheckVenue(ctx context.Context, name string, contact string, email string) error {
 	flag, err := cs.storer.CheckVenue(ctx, name, contact, email)
 	if flag {
 		logger.WithField("err", err.Error()).Error("error: venue already exists")
 		return errors.New("error: venue already exists")
 	}
-	return nil 
+	return nil
 }

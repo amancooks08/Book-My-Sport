@@ -10,7 +10,7 @@ import (
 )
 
 type Booking struct {
-	Id          int     `json:"id"`
+	ID          int     `json:"id"`
 	CustomerID  int     `json:"customer_id"`
 	VenueID     int     `json:"venue_id"`
 	BookingDate string  `json:"booking_date"`
@@ -21,7 +21,7 @@ type Booking struct {
 	AmountPaid  float64 `json:"amount"`
 }
 
-func (s *pgStore) BookSlot(ctx context.Context, b *Booking) (amount float64, err error) { //ad: named return can be used
+func (s *pgStore) BookSlot(ctx context.Context, b *Booking) (float64, error) { 
 	tx, err := s.db.Begin()
 	if err != nil {
 		logger.WithField("err", err.Error()).Error("error booking slot : Transaction Failed")
@@ -50,7 +50,7 @@ func (s *pgStore) BookSlot(ctx context.Context, b *Booking) (amount float64, err
 		return 0.0, ErrGameNotAvailable
 	}
 	// Calculate Amount as a double value
-	amount = float64(price * slots)
+	amount := float64(price * slots)
 	var flag int
 	err = s.db.QueryRow(CheckSlotStatusQuery, &b.VenueID, &b.StartTime, &b.EndTime, &b.BookingDate).Scan(&flag)
 	if err != nil {
@@ -60,14 +60,14 @@ func (s *pgStore) BookSlot(ctx context.Context, b *Booking) (amount float64, err
 	fmt.Println(flag)
 	if flag == 0 {
 		//Insert the booking details in the booking table and return id
-		err = s.db.QueryRow(BookSlotQuery, &b.CustomerID, &b.VenueID, &b.BookingDate, &b.BookingTime, &b.StartTime, &b.EndTime, &b.Game, &amount).Scan(&b.Id)
+		err = s.db.QueryRow(BookSlotQuery, &b.CustomerID, &b.VenueID, &b.BookingDate, &b.BookingTime, &b.StartTime, &b.EndTime, &b.Game, &amount).Scan(&b.ID)
 		if err != nil {
 			logger.WithField("err", err.Error()).Error("error booking slot")
 			return 0.0, ErrBookSlot
 		}
 
 		// Insert slots with booked status in the slot table
-		generateSlots(s.db, b.VenueID, b.StartTime, b.EndTime, b.BookingDate, b.Id)
+		generateSlots(s.db, b.VenueID, b.StartTime, b.EndTime, b.BookingDate, b.ID)
 	} else {
 		return 0.0, ErrSlotNotAvailable
 	}
@@ -76,9 +76,9 @@ func (s *pgStore) BookSlot(ctx context.Context, b *Booking) (amount float64, err
 
 }
 
-func (s *pgStore) GetBooking(ctx context.Context, id int) (booking *Booking, err error) {
-	booking = &Booking{}
-	err = s.db.QueryRow(GetBookingQuery, &id).Scan(&booking.Id, &booking.CustomerID, &booking.VenueID, &booking.BookingTime, &booking.BookingDate, &booking.StartTime, &booking.EndTime, &booking.Game, &booking.AmountPaid)
+func (s *pgStore) GetBooking(ctx context.Context, id int) (*Booking, error) {
+	booking := &Booking{}
+	err := s.db.QueryRow(GetBookingQuery, &id).Scan(&booking.ID, &booking.CustomerID, &booking.VenueID, &booking.BookingTime, &booking.BookingDate, &booking.StartTime, &booking.EndTime, &booking.Game, &booking.AmountPaid)
 	if err != nil {
 		logger.WithField("err", err.Error()).Error("error getting booking")
 		return nil, ErrGetBooking
@@ -86,8 +86,8 @@ func (s *pgStore) GetBooking(ctx context.Context, id int) (booking *Booking, err
 	return booking, nil
 }
 
-func (s *pgStore) GetAllBookings(ctx context.Context, userId int) (bookings []*Booking, err error) {
-	bookings = []*Booking{}
+func (s *pgStore) GetAllBookings(ctx context.Context, userId int) ([]*Booking, error) {
+	bookings := []*Booking{}
 
 	rows, err := s.db.Query(GetAllBookingsQuery, &userId)
 	defer rows.Close()
@@ -102,14 +102,14 @@ func (s *pgStore) GetAllBookings(ctx context.Context, userId int) (bookings []*B
 
 	for rows.Next() {
 		booking := &Booking{}
-		err := rows.Scan(&booking.Id, &booking.CustomerID, &booking.VenueID, &booking.BookingTime, &booking.BookingDate, &booking.StartTime, &booking.EndTime, &booking.Game, &booking.AmountPaid)
+		err := rows.Scan(&booking.ID, &booking.CustomerID, &booking.VenueID, &booking.BookingTime, &booking.BookingDate, &booking.StartTime, &booking.EndTime, &booking.Game, &booking.AmountPaid)
 		if err != nil {
 			logger.WithField("err", err.Error()).Error("error getting all bookings")
 			return nil, ErrGetBookings
 		}
 
 		booking = &Booking{
-			Id:          booking.Id,
+			ID:          booking.ID,
 			CustomerID:  booking.CustomerID,
 			VenueID:     booking.VenueID,
 			BookingTime: booking.BookingTime[0:10] + " " + booking.BookingTime[11:19],
@@ -125,22 +125,26 @@ func (s *pgStore) GetAllBookings(ctx context.Context, userId int) (bookings []*B
 }
 
 func (s *pgStore) CancelBooking(ctx context.Context, id int) error {
-	_, err := s.db.Exec(CancelBookingQuery, &id)
+	tx, err := s.db.Begin()
+	if err != nil {
+		logger.WithField("err", err.Error()).Error("error cancelling booking : Transaction Failed")
+		return ErrBeginTx
+	}
+	defer tx.Rollback()
+
+	// Remove booked slots from slots table
+	_, err = s.db.Exec(RemoveBookedSlotsQuery, &id)
 	if err != nil {
 		logger.WithField("err", err.Error()).Error("error cancelling booking")
 		return ErrCancelBooking
 	}
-	//Update the status of slots booked in the slots table to avialable
 
-	_, err = s.db.Exec(UpdateSlotStatusAvailableQuery, &id)
+	// Remove booking from booking table
+	_, err = s.db.Exec(CancelBookingQuery, &id)
 	if err != nil {
-		logger.WithField("err", err.Error()).Error("error updating slot status")
-		return ErrUpdateSlots
+		logger.WithField("err", err.Error()).Error("error cancelling booking")
+		return ErrCancelBooking
 	}
-	_, err = s.db.Exec(UpdateSlotBookingQuery, &id)
-	if err != nil {
-		logger.WithField("err", err.Error()).Error("error updating slot status to available")
-		return ErrUpdateSlotsAvailable
-	}
+	tx.Commit()
 	return nil
 }
