@@ -139,9 +139,7 @@ func (s *pgStore) DeleteVenue(ctx context.Context, userID int, id int) error {
 	} else if err != nil {
 		logger.WithField("err", err.Error()).Error("error checking venue owner")
 		return ErrCheckVenueOwner
-	}
-	if !flag {
-		logger.WithField("err", err.Error()).Error("user is not the owner of this venue")
+	} else if !flag && err == nil{
 		return ErrVenueOwnerNotFound
 	}
 

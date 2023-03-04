@@ -35,8 +35,8 @@ func AddVenue(CustomerServices Services) http.HandlerFunc {
 			}
 			json_response, _ := json.Marshal(msg)
 
-			rw.WriteHeader(http.StatusBadRequest)
 			rw.Header().Add("Content-Type", "application/json")
+			rw.WriteHeader(http.StatusBadRequest)
 			rw.Write(json_response)
 			return
 		}
@@ -47,8 +47,8 @@ func AddVenue(CustomerServices Services) http.HandlerFunc {
 			}
 			json_response, _ := json.Marshal(msg)
 
-			rw.WriteHeader(http.StatusBadRequest)
 			rw.Header().Add("Content-Type", "application/json")
+			rw.WriteHeader(http.StatusBadRequest)
 			rw.Write(json_response)
 			return
 		}
@@ -62,8 +62,8 @@ func AddVenue(CustomerServices Services) http.HandlerFunc {
 				}
 
 				json_response, _ := json.Marshal(msg)
-				rw.WriteHeader(http.StatusInternalServerError)
 				rw.Header().Add("Content-Type", "application/json")
+				rw.WriteHeader(http.StatusInternalServerError)
 				rw.Write(json_response)
 				return
 			}
@@ -73,8 +73,8 @@ func AddVenue(CustomerServices Services) http.HandlerFunc {
 			}
 
 			json_response, _ := json.Marshal(msg)
-			rw.WriteHeader(http.StatusBadRequest)
 			rw.Header().Add("Content-Type", "application/json")
+			rw.WriteHeader(http.StatusBadRequest)
 			rw.Write(json_response)
 			return
 		}
@@ -133,8 +133,8 @@ func UpdateVenue(CustomerServices Services) http.HandlerFunc {
 				Message: "invalid user or venue ID",
 			}
 			json_response, _ := json.Marshal(msg)
-			rw.WriteHeader(http.StatusBadRequest)
 			rw.Header().Add("Content-Type", "application/json")
+			rw.WriteHeader(http.StatusBadRequest)
 			rw.Write(json_response)
 			return
 		}
@@ -223,19 +223,30 @@ func DeleteVenue(CustomerServices Services) http.HandlerFunc {
 		//Check if "venue_id" key is not found in vars
 
 		if userID == 0 || venueID == 0 {
+			fmt.Println(userID, venueID)
 			msg := domain.Message{
 				Message: "invalid user or venue ID",
 			}
 			json_response, _ := json.Marshal(msg)
-			rw.WriteHeader(http.StatusBadRequest)
 			rw.Header().Add("Content-Type", "application/json")
+			rw.WriteHeader(http.StatusForbidden)
 			rw.Write(json_response)
 			return
 		}
 
+
 		err := CustomerServices.DeleteVenue(req.Context(), userID, venueID)
-		if err != nil {
-			http.Error(rw, fmt.Sprintf("%s", err), http.StatusInternalServerError)
+		if err != nil && err.Error() == "you are not the owner of this venue" {
+			msg := domain.Message{
+				Message: fmt.Sprintf("%s", err),
+			}
+			jsonResponse, _ := json.Marshal(msg)
+			rw.Header().Add("Content-Type", "application/json")
+			rw.WriteHeader(http.StatusForbidden)
+			rw.Write(jsonResponse)
+			return
+		} else if err != nil {
+			http.Error(rw, "error: deleting venue", http.StatusInternalServerError)
 			return
 		}
 

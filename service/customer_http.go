@@ -19,6 +19,7 @@ func BookSlot(CustomerServices Services) http.HandlerFunc {
 			rw.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
+
 		// Get The userId from the JWT token
 		var booking db.Booking
 		err := json.NewDecoder(req.Body).Decode(&booking)
@@ -27,6 +28,7 @@ func BookSlot(CustomerServices Services) http.HandlerFunc {
 			return
 		}
 		defer req.Body.Close()
+		
 		booking.CustomerID, booking.VenueID = GetUserVenueId(req, rw)
 		booking.BookingTime = time.Now().Format("2006-01-02 15:04:05.999999-07")
 		date, err := time.Parse("2006-01-02", booking.BookingDate)
@@ -62,10 +64,8 @@ func BookSlot(CustomerServices Services) http.HandlerFunc {
 		}
 
 		response := jsonResponse{Reponse: "Booking successful.", Amount: amount}
-		// rw.WriteHeader(http.StatusCreated)
 		rw.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(rw).Encode(response)
-
 	})
 }
 
@@ -82,14 +82,14 @@ func GetAllBookings(CustomerServices Services) http.HandlerFunc {
 		userID, _ := GetUserVenueId(req, rw)
 
 		bookings, err := CustomerServices.GetAllBookings(req.Context(), userID)
-		if err != nil && err.Error() == "No bookings found" {
+		if err != nil && err.Error() == "no bookings found" {
 			http.Error(rw, fmt.Sprintf("%s", err), http.StatusInternalServerError)
 			return
 		}
 
 		// If bookings is empty
 		if len(bookings) == 0 {
-			http.Error(rw, "No bookings found", http.StatusNotFound)
+			http.Error(rw, "no bookings found", http.StatusNotFound)
 			return
 		}
 
@@ -100,7 +100,6 @@ func GetAllBookings(CustomerServices Services) http.HandlerFunc {
 		response := jsonResponse{Bookings: bookings}
 		rw.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(rw).Encode(response)
-		rw.WriteHeader(http.StatusOK)
 	})
 }
 
@@ -134,7 +133,6 @@ func GetBooking(CustomerServices Services) http.HandlerFunc {
 		response := jsonResponse{Booking: booking}
 		rw.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(rw).Encode(response)
-		rw.WriteHeader(http.StatusOK)
 	})
 }
 
@@ -164,8 +162,8 @@ func CancelBooking(CustomerServices Services) http.HandlerFunc {
 			msg := domain.Message{
 				Message: "booking not found",
 			}
-			rw.WriteHeader(http.StatusNotFound)
 			rw.Header().Set("Content-Type", "application/json")
+			rw.WriteHeader(http.StatusNotFound)
 			json.NewEncoder(rw).Encode(msg)
 			return
 		}
@@ -174,8 +172,8 @@ func CancelBooking(CustomerServices Services) http.HandlerFunc {
 			msg := domain.Message{
 				Message: "you are not authorized to cancel this booking",
 			}
-			rw.WriteHeader(http.StatusUnauthorized)
 			rw.Header().Set("Content-Type", "application/json")
+			rw.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(rw).Encode(msg)
 			return
 		}
@@ -193,6 +191,5 @@ func CancelBooking(CustomerServices Services) http.HandlerFunc {
 		response := jsonResponse{Reponse: "Booking cancelled successfully."}
 		rw.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(rw).Encode(response)
-		rw.WriteHeader(http.StatusOK)
 	})
 }

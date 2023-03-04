@@ -82,7 +82,7 @@ func (cs *UserOps) AddVenue(ctx context.Context, venue *db.Venue) error {
 	err := cs.storer.AddVenue(ctx, venue)
 	if err != nil {
 		logger.WithField("err", err.Error()).Error("error adding venue")
-		return errors.New("error adding venue")
+		return err
 	}
 	return nil
 }

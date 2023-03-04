@@ -85,8 +85,8 @@ func LoginUser(CustomerServices Services) http.HandlerFunc {
 					http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
 					return
 				}
-				rw.WriteHeader(http.StatusUnauthorized)
 				rw.Header().Add("Content-Type", "application/json")
+				rw.WriteHeader(http.StatusUnauthorized)
 				rw.Write(respBytes)
 				return
 			}
@@ -119,8 +119,8 @@ func GetAllVenues(CustomerServices Services) http.HandlerFunc {
 				return
 			}
 			// Add not found status
-			rw.WriteHeader(http.StatusNotFound)
 			rw.Header().Add("Content-Type", "application/json")
+			rw.WriteHeader(http.StatusNotFound)
 			rw.Write(respBytes)
 			return
 		}
@@ -149,9 +149,10 @@ func GetVenue(CustomerServices Services) http.HandlerFunc {
 				http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
 				return
 			}
+
 			// Add not found status
-			rw.WriteHeader(http.StatusNotFound)
 			rw.Header().Add("Content-Type", "application/json")
+			rw.WriteHeader(http.StatusNotFound)
 			rw.Write(respBytes)
 			return
 		}
@@ -164,8 +165,8 @@ func GetVenue(CustomerServices Services) http.HandlerFunc {
 				return
 			}
 			// Add not found status
-			rw.WriteHeader(http.StatusNotFound)
 			rw.Header().Add("Content-Type", "application/json")
+			rw.WriteHeader(http.StatusNotFound)
 			rw.Write(respBytes)
 			return
 		} else if err != nil {
@@ -176,8 +177,8 @@ func GetVenue(CustomerServices Services) http.HandlerFunc {
 				return
 			}
 			// Add not found status
-			rw.WriteHeader(http.StatusInternalServerError)
 			rw.Header().Add("Content-Type", "application/json")
+			rw.WriteHeader(http.StatusInternalServerError)
 			rw.Write(respBytes)
 			return
 		}

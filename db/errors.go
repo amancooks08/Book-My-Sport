@@ -19,7 +19,7 @@ var (
 	ErrFetchingVenue  = errors.New("error fetching venue")
 	ErrUpdatingVenue  = errors.New("error updating venue")
 	ErrDeletingVenue  = errors.New("error deleting venue")
-	ErrVenueOwnerNotFound = errors.New("user is not the owner of this venue")
+	ErrVenueOwnerNotFound = errors.New("you are not the owner of this venue")
 	ErrCheckVenueOwner = errors.New("error checking venue owner")
 
 	ErrCheckAvailability = errors.New("error checking availability")

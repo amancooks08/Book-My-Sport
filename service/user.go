@@ -149,18 +149,18 @@ func GetUserVenueId(req *http.Request, rw http.ResponseWriter) (int, int) {
 		return 0, 0
 	}
 
-	user_id, ok := claims["user_id"].(float64)
+	userID, ok := claims["user_id"].(float64)
 	if !ok || !token.Valid {
 		http.Error(rw, "Unauthorized", http.StatusUnauthorized)
 		return 0, 0
 	}
 	vars := mux.Vars(req)
-	venueID, err := strconv.Atoi(vars["venue_id"])
+	venueID, err := strconv.Atoi(vars["venueID"])
 	if err != nil {
 		logger.WithField("error", err).Error("Error while parsing venue_id")
-		return int(user_id), 0
+		return int(userID), 0
 	}
-	return int(user_id), venueID
+	return int(userID), venueID
 }
 
 type dependencies struct {
