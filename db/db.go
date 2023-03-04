@@ -5,17 +5,17 @@ import (
 )
 
 type Storer interface {
-	RegisterUser(context.Context, *User) error
-	LoginUser(context.Context, string) (*LoginResponse, error)
+	RegisterUser(context.Context, User) error
+	LoginUser(context.Context, string) (LoginResponse, error)
 	CheckUser(context.Context, string, string) (bool, error)
-	AddVenue(context.Context, *Venue) error
+	AddVenue(context.Context, Venue) error
 	CheckVenue(context.Context, string, string, string) (bool, error)
-	GetAllVenues(context.Context) ([]*Venue, error)
-	GetVenue(context.Context, int) (*Venue, error)
-	UpdateVenue(context.Context, *Venue, int, int) error
+	GetAllVenues(context.Context) ([]Venue, error)
+	GetVenue(context.Context, int) (Venue, error)
+	UpdateVenue(context.Context, Venue, int, int) error
 	DeleteVenue(context.Context, int, int) error
-	CheckAvailability(context.Context, int, string) ([]*Slot, error)
-	BookSlot(context.Context, *Booking) (float64, error)
+	CheckAvailability(context.Context, int, string) ([]Slot, error)
+	BookSlot(context.Context, Booking) (float64, error)
 	GetBooking(context.Context, int) (Booking, error)
 	GetAllBookings(context.Context, int) ([]Booking, error)
 	CancelBooking(context.Context, int) error

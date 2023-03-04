@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	db "github.com/amancooks08/BookMySport/db"
 	"github.com/amancooks08/BookMySport/domain"
 	"github.com/gorilla/mux"
 )
@@ -20,7 +19,7 @@ func AddVenue(CustomerServices Services) http.HandlerFunc {
 			return
 		}
 
-		var venue db.Venue
+		var venue domain.Venue
 		err := json.NewDecoder(req.Body).Decode(&venue)
 		if err != nil {
 			http.Error(rw, "invalid request payload", http.StatusBadRequest)
@@ -55,7 +54,7 @@ func AddVenue(CustomerServices Services) http.HandlerFunc {
 		userID, _ := GetUserVenueId(req, rw)
 		venue.OwnerID = userID
 		if validateContact(venue.Contact) && validateEmail(venue.Email) {
-			err := CustomerServices.AddVenue(req.Context(), &venue)
+			err := CustomerServices.AddVenue(req.Context(), venue)
 			if err != nil {
 				msg := domain.Message{
 					Message: "failed to add venue",
@@ -117,7 +116,7 @@ func UpdateVenue(CustomerServices Services) http.HandlerFunc {
 			return
 		}
 
-		var venue db.Venue
+		var venue domain.Venue
 		err := json.NewDecoder(req.Body).Decode(&venue)
 		if err != nil {
 			http.Error(rw, "invalid request payload", http.StatusBadRequest)
@@ -146,7 +145,7 @@ func UpdateVenue(CustomerServices Services) http.HandlerFunc {
 
 		if validateContact(venue.Contact) && validateEmail(venue.Email) {
 
-			err := CustomerServices.UpdateVenue(req.Context(), &venue, userID, venueID)
+			err := CustomerServices.UpdateVenue(req.Context(), venue, userID, venueID)
 			if err != nil {
 				http.Error(rw, "error: updating venue", http.StatusInternalServerError)
 				return
@@ -233,7 +232,6 @@ func DeleteVenue(CustomerServices Services) http.HandlerFunc {
 			rw.Write(json_response)
 			return
 		}
-
 
 		err := CustomerServices.DeleteVenue(req.Context(), userID, venueID)
 		if err != nil && err.Error() == "you are not the owner of this venue" {

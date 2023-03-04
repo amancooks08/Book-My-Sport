@@ -18,23 +18,23 @@ import (
 var secretKey = []byte("secret@987")
 
 type Services interface {
-	RegisterUser(ctx context.Context, user *db.User) error
+	RegisterUser(ctx context.Context, user domain.User) error
 	CheckUser(ctx context.Context, email string, contact string) error
 	LoginUser(ctx context.Context, email string, password string) (string, error)
-	AddVenue(ctx context.Context, venue *db.Venue) error
+	AddVenue(ctx context.Context, venue domain.Venue) error
 	CheckVenue(ctx context.Context, name string, contact string, email string) error
 	GetAllVenues(ctx context.Context) ([]domain.Venue, error)
 	GetVenue(ctx context.Context, id int) (domain.Venue, error)
-	UpdateVenue(ctx context.Context, venue *db.Venue, userID int, id int) error
+	UpdateVenue(ctx context.Context, venue domain.Venue, userID int, id int) error
 	DeleteVenue(ctx context.Context, userID, id int) error
 	CheckAvailability(ctx context.Context, id int, date string) ([]domain.Slot, error)
-	BookSlot(ctx context.Context, b *db.Booking) (float64, error)
+	BookSlot(ctx context.Context, b domain.Booking) (float64, error)
 	GetAllBookings(ctx context.Context, userId int) ([]domain.Booking, error)
 	GetBooking(ctx context.Context, bookingid int) (domain.Booking, error)
 	CancelBooking(ctx context.Context, id int) error
 }
 
-func GenerateToken(loginResponse *db.LoginResponse) (string, error) {
+func GenerateToken(loginResponse db.LoginResponse) (string, error) {
 	tokenExpirationTime := time.Now().Add(time.Hour * 24)
 	tokenObject := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": loginResponse.Id,
@@ -55,9 +55,19 @@ func NewCustomerOps(storer db.Storer) Services {
 	}
 }
 
-func (cs *UserOps) RegisterUser(ctx context.Context, user *db.User) error {
-	user.Password, _ = HashPassword(user.Password)
-	err := cs.storer.RegisterUser(ctx, user)
+func (cs *UserOps) RegisterUser(ctx context.Context, user domain.User) error {
+	dbUser := db.User{
+		Name:     user.Name,
+		Contact:  user.Contact,
+		Email:    user.Email,
+		Password: user.Password,
+		City:     user.City,
+		State:    user.State,
+		Type:     user.Type,
+	}
+
+	dbUser.Password, _ = HashPassword(user.Password)
+	err := cs.storer.RegisterUser(ctx, dbUser)
 	if err != nil {
 		return errors.New("error registering user")
 	}
@@ -78,8 +88,23 @@ func (cs *UserOps) LoginUser(ctx context.Context, email string, password string)
 	return token, nil
 }
 
-func (cs *UserOps) AddVenue(ctx context.Context, venue *db.Venue) error {
-	err := cs.storer.AddVenue(ctx, venue)
+func (cs *UserOps) AddVenue(ctx context.Context, venue domain.Venue) error {
+	dbVenue := db.Venue{
+		Name:        venue.Name,
+		Address:     venue.Address,
+		City: 	  	 venue.City,
+		State:       venue.State,
+		Contact:     venue.Contact,
+		Email:       venue.Email,
+		Opening:     venue.Opening,
+		Closing:     venue.Closing,
+		Price:       venue.Price,
+		Games: 	 	 venue.Games,
+		Rating: 	 venue.Rating,
+		OwnerID:     venue.OwnerID,
+	}
+
+	err := cs.storer.AddVenue(ctx, dbVenue)
 	if err != nil {
 		logger.WithField("err", err.Error()).Error("error adding venue")
 		return err
@@ -145,8 +170,24 @@ func (cs *UserOps) GetVenue(ctx context.Context, id int) (domain.Venue, error) {
 	return respVenue, nil
 }
 
-func (cs *UserOps) UpdateVenue(ctx context.Context, venue *db.Venue, userID int, id int) error {
-	err := cs.storer.UpdateVenue(ctx, venue, userID, id)
+func (cs *UserOps) UpdateVenue(ctx context.Context, venue domain.Venue, userID int, id int) error {
+	dbVenue := db.Venue{
+		ID:          venue.ID,
+		Name:        venue.Name,
+		Address:     venue.Address,
+		City: 	  	 venue.City,
+		State:       venue.State,
+		Contact:     venue.Contact,
+		Email:       venue.Email,
+		Opening:     venue.Opening,
+		Closing:     venue.Closing,
+		Price:       venue.Price,
+		Games: 	 	 venue.Games,
+		Rating: 	 venue.Rating,
+		OwnerID:     venue.OwnerID,
+	}
+
+	err := cs.storer.UpdateVenue(ctx, dbVenue, userID, id)
 	if err != nil {
 		return err
 	}
@@ -179,8 +220,20 @@ func (cs *UserOps) CheckAvailability(ctx context.Context, venueId int, date stri
 	return respSlots, nil
 }
 
-func (cs *UserOps) BookSlot(ctx context.Context, b *db.Booking) (float64, error) {
-	price, err := cs.storer.BookSlot(ctx, b)
+func (cs *UserOps) BookSlot(ctx context.Context, b domain.Booking) (float64, error) {
+	dbBooking := db.Booking{
+		ID:       	 b.ID,
+		CustomerID:  b.CustomerID,
+		VenueID: 	 b.VenueID,
+		BookingDate: b.BookingDate,
+		BookingTime: b.BookingTime,
+		StartTime:   b.StartTime,
+		EndTime:     b.EndTime,
+		Game:        b.Game,
+		AmountPaid:  b.AmountPaid,
+	}
+
+	price, err := cs.storer.BookSlot(ctx, dbBooking)
 	if err != nil {
 		logger.WithField("err", err.Error()).Error("error booking slot")
 		return 0.0, errors.New("error booking slot")

@@ -17,7 +17,7 @@ func InitRouter(deps dependencies) (router *mux.Router) {
 	router.HandleFunc("/customer/register", service.RegisterCustomer(deps.CustomerServices)).Methods(http.MethodPost)
 	router.HandleFunc("/venue_owner/register", service.RegisterVenueOwner(deps.CustomerServices)).Methods(http.MethodPost)
 	router.HandleFunc("/user/login", service.LoginUser(deps.CustomerServices)).Methods(http.MethodPost)
-	router.HandleFunc("/venue_owner/venues/add", authMiddleware(service.AddVenue(deps.CustomerServices))).Methods(http.MethodPost)
+	router.HandleFunc("/venue_owner/venues", authMiddleware(service.AddVenue(deps.CustomerServices))).Methods(http.MethodPost)
 	router.HandleFunc("/user/venues", authMiddleware(service.GetAllVenues(deps.CustomerServices))).Methods(http.MethodGet)
 	router.HandleFunc("/user/venues/{venueID}", authMiddleware(service.GetVenue(deps.CustomerServices))).Methods(http.MethodGet)
 	router.HandleFunc("/venue_owner/venues/{venueID}", authMiddleware(service.UpdateVenue(deps.CustomerServices))).Methods(http.MethodPut)

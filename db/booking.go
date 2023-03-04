@@ -21,7 +21,7 @@ type Booking struct {
 	AmountPaid  float64 
 }
 
-func (s *pgStore) BookSlot(ctx context.Context, b *Booking) (float64, error) {
+func (s *pgStore) BookSlot(ctx context.Context, b Booking) (float64, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
 		logger.WithField("err", err.Error()).Error("error booking slot : Transaction Failed")
@@ -42,14 +42,14 @@ func (s *pgStore) BookSlot(ctx context.Context, b *Booking) (float64, error) {
 	slots = int(et.Sub(st).Hours())
 
 	// Check if the game is present at the venue or not
-	var game bool
-	err = s.db.QueryRow(CheckGameQuery, b.VenueID, b.Game).Scan(&game)
+	var gameExists bool
+	err = s.db.QueryRow(CheckGameQuery, b.VenueID, b.Game).Scan(&gameExists)
 	if err != nil && err != sql.ErrNoRows {
 		logger.WithField("err", err.Error()).Error("error checking game")
 		return 0.0, ErrCheckGame
 	}
 
-	if !game {
+	if !gameExists {
 		return 0.0, ErrGameNotAvailable
 	}
 

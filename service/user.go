@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	db "github.com/amancooks08/BookMySport/db"
 	"github.com/amancooks08/BookMySport/domain"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
@@ -22,7 +21,7 @@ func registerUser(rw http.ResponseWriter, req *http.Request, CustomerServices Se
 		return
 	}
 
-	var user db.User
+	var user domain.User
 	err := json.NewDecoder(req.Body).Decode(&user)
 	if err != nil {
 		http.Error(rw, "Invalid request payload", http.StatusBadRequest)
@@ -51,7 +50,7 @@ func registerUser(rw http.ResponseWriter, req *http.Request, CustomerServices Se
 	if validateContact(user.Contact) && validateEmail(user.Email) {
 
 		user.Type = userType
-		err = CustomerServices.RegisterUser(req.Context(), &user)
+		err = CustomerServices.RegisterUser(req.Context(), user)
 		if err != nil {
 			http.Error(rw, "Failed to register user", http.StatusInternalServerError)
 			return

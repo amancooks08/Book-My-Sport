@@ -5,9 +5,7 @@ package mocks
 import (
 	context "context"
 
-	db "github.com/amancooks08/BookMySport/db"
 	domain "github.com/amancooks08/BookMySport/domain"
-
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -17,11 +15,11 @@ type Services struct {
 }
 
 // AddVenue provides a mock function with given fields: ctx, venue
-func (_m *Services) AddVenue(ctx context.Context, venue *db.Venue) error {
+func (_m *Services) AddVenue(ctx context.Context, venue domain.Venue) error {
 	ret := _m.Called(ctx, venue)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *db.Venue) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, domain.Venue) error); ok {
 		r0 = rf(ctx, venue)
 	} else {
 		r0 = ret.Error(0)
@@ -31,21 +29,21 @@ func (_m *Services) AddVenue(ctx context.Context, venue *db.Venue) error {
 }
 
 // BookSlot provides a mock function with given fields: ctx, b
-func (_m *Services) BookSlot(ctx context.Context, b *db.Booking) (float64, error) {
+func (_m *Services) BookSlot(ctx context.Context, b domain.Booking) (float64, error) {
 	ret := _m.Called(ctx, b)
 
 	var r0 float64
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *db.Booking) (float64, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, domain.Booking) (float64, error)); ok {
 		return rf(ctx, b)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *db.Booking) float64); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, domain.Booking) float64); ok {
 		r0 = rf(ctx, b)
 	} else {
 		r0 = ret.Get(0).(float64)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *db.Booking) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, domain.Booking) error); ok {
 		r1 = rf(ctx, b)
 	} else {
 		r1 = ret.Error(1)
@@ -261,11 +259,11 @@ func (_m *Services) LoginUser(ctx context.Context, email string, password string
 }
 
 // RegisterUser provides a mock function with given fields: ctx, user
-func (_m *Services) RegisterUser(ctx context.Context, user *db.User) error {
+func (_m *Services) RegisterUser(ctx context.Context, user domain.User) error {
 	ret := _m.Called(ctx, user)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *db.User) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, domain.User) error); ok {
 		r0 = rf(ctx, user)
 	} else {
 		r0 = ret.Error(0)
@@ -275,11 +273,11 @@ func (_m *Services) RegisterUser(ctx context.Context, user *db.User) error {
 }
 
 // UpdateVenue provides a mock function with given fields: ctx, venue, userID, id
-func (_m *Services) UpdateVenue(ctx context.Context, venue *db.Venue, userID int, id int) error {
+func (_m *Services) UpdateVenue(ctx context.Context, venue domain.Venue, userID int, id int) error {
 	ret := _m.Called(ctx, venue, userID, id)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *db.Venue, int, int) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, domain.Venue, int, int) error); ok {
 		r0 = rf(ctx, venue, userID, id)
 	} else {
 		r0 = ret.Error(0)

@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	db "github.com/amancooks08/BookMySport/db"
 	"github.com/amancooks08/BookMySport/domain"
 	"github.com/gorilla/mux"
 )
@@ -21,14 +20,14 @@ func BookSlot(CustomerServices Services) http.HandlerFunc {
 		}
 
 		// Get The userId from the JWT token
-		var booking db.Booking
+		var booking domain.Booking
 		err := json.NewDecoder(req.Body).Decode(&booking)
 		if err != nil {
 			http.Error(rw, "Invalid request payload", http.StatusBadRequest)
 			return
 		}
 		defer req.Body.Close()
-		
+
 		booking.CustomerID, booking.VenueID = GetUserVenueId(req, rw)
 		booking.BookingTime = time.Now().Format("2006-01-02 15:04:05.999999-07")
 		date, err := time.Parse("2006-01-02", booking.BookingDate)
@@ -52,7 +51,7 @@ func BookSlot(CustomerServices Services) http.HandlerFunc {
 			return
 		}
 
-		amount, err := CustomerServices.BookSlot(req.Context(), &booking)
+		amount, err := CustomerServices.BookSlot(req.Context(), booking)
 		if err != nil {
 			http.Error(rw, fmt.Sprintf("%s", err), http.StatusInternalServerError)
 			return

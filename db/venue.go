@@ -27,7 +27,7 @@ type Venue struct {
 }
 
 // AddVenue adds a venue to the database
-func (s *pgStore) AddVenue(ctx context.Context, venue *Venue) error {
+func (s *pgStore) AddVenue(ctx context.Context, venue Venue) error {
 	err := s.db.QueryRow(InsertVenueQuery, &venue.Name, &venue.Contact, &venue.City, &venue.State, &venue.Address, &venue.Email, &venue.Opening, &venue.Closing, &venue.Price, pq.Array(&venue.Games), &venue.Rating, &venue.OwnerID).Scan(&venue.ID)
 	if err == errors.New(`pq: duplicate key value violates unique constraint \"venue_name_key\"`) {
 		logger.WithField("err", err.Error()).Error("Error adding venue : Name already exists.")
@@ -46,19 +46,19 @@ func (s *pgStore) AddVenue(ctx context.Context, venue *Venue) error {
 }
 
 // GetAllVenues returns all the venues in the database
-func (s *pgStore) GetAllVenues(ctx context.Context) ([]*Venue, error) {
-	venues := []*Venue{}
+func (s *pgStore) GetAllVenues(ctx context.Context) ([]Venue, error) {
+	venues := []Venue{}
 	rows, err := s.db.Query(GetAllVenuesQuery)
 	if err != nil && err == sql.ErrNoRows {
 		logger.WithField("err", err.Error()).Error("error : no venues found")
-		return nil, ErrNoVenues
+		return []Venue{}, ErrNoVenues
 	} else if err != nil {
 		logger.WithField("err", err.Error()).Error("Error fetching all venues")
-		return nil, ErrFetchingVenues
+		return []Venue{}, ErrFetchingVenues
 	}
 	defer rows.Close()
 	for rows.Next() {
-		venue := &Venue{}
+		venue := Venue{}
 		err = rows.Scan(&venue.ID, &venue.Name, &venue.Address, &venue.City, &venue.State, &venue.Contact, &venue.Email, &venue.Opening, &venue.Closing, &venue.Price, pq.Array(&venue.Games), &venue.Rating)
 		if err != nil {
 			logger.WithField("err", err.Error()).Error("Error fetching all venues")
@@ -84,29 +84,29 @@ func (s *pgStore) CheckVenue(ctx context.Context, name string, contact string, e
 }
 
 // GetVenue returns a venue with the given id
-func (s *pgStore) GetVenue(ctx context.Context, id int) (*Venue, error) {
+func (s *pgStore) GetVenue(ctx context.Context, id int) (Venue, error) {
 	rows, err := s.db.Query(GetVenueQuery, &id)
 	if err != nil && err == sql.ErrNoRows {
 		logger.WithField("err", err.Error()).Error("error: invalid venue id")
-		return nil, ErrInvalidVID
+		return Venue{}, ErrInvalidVID
 	} else if err != nil {
 		logger.WithField("err", err.Error()).Error("error fetching venue")
-		return nil, ErrFetchingVenue
+		return Venue{}, ErrFetchingVenue
 	}
 	defer rows.Close()
-	venue := &Venue{ID: 0, Name: "", Contact: "", City: "", State: "", Address: "", Email: "", Opening: "", Closing: "", Price: 0, Games: []string{}, Rating: 0}
+	venue := Venue{ID: 0, Name: "", Contact: "", City: "", State: "", Address: "", Email: "", Opening: "", Closing: "", Price: 0, Games: []string{}, Rating: 0}
 	for rows.Next() {
 		err = rows.Scan(&venue.ID, &venue.Name, &venue.Address, &venue.City, &venue.State, &venue.Contact, &venue.Email, &venue.Opening, &venue.Closing, &venue.Price, pq.Array(&venue.Games), &venue.Rating)
 		if err != nil {
 			logger.WithField("err", err.Error()).Error("error fetching venue")
-			return nil, ErrFetchingVenue
+			return Venue{}, ErrFetchingVenue
 		}
 	}
 	return venue, nil
 }
 
 // UpdateVenue updates a venue in the database
-func (s *pgStore) UpdateVenue(ctx context.Context, venue *Venue, userID int, id int) error {
+func (s *pgStore) UpdateVenue(ctx context.Context, venue Venue, userID int, id int) error {
 	// Check if the user is owner of the venue
 	var flag bool
 	err := s.db.QueryRow(CheckVenueOwnerQuery, &id, &userID).Scan(&flag)
@@ -165,7 +165,7 @@ func (s *pgStore) DeleteVenue(ctx context.Context, userID int, id int) error {
 
 //Check availability of slots at a venue
 
-func (s *pgStore) CheckAvailability(ctx context.Context, venueId int, date string) ([]*Slot, error) {
+func (s *pgStore) CheckAvailability(ctx context.Context, venueId int, date string) ([]Slot, error) {
 	var exists bool
 	// Check if slots for the venue on that day exist
 	err := s.db.QueryRow("SELECT exists(SELECT 1 FROM slots WHERE venue_id = $1 AND date = $2)", venueId, date).Scan(&exists)
@@ -192,9 +192,9 @@ func (s *pgStore) CheckAvailability(ctx context.Context, venueId int, date strin
 			return nil, ErrParseTime
 		}
 
-		var slotList []*Slot
+		var slotList []Slot
 		for currentTime.Before(venueClosing) {
-			slot := &Slot{VenueID: venueId, Date: date, StartTime: currentTime.Format("15:04"), EndTime: currentTime.Add(time.Hour).Format("15:04")}
+			slot := Slot{VenueID: venueId, Date: date, StartTime: currentTime.Format("15:04"), EndTime: currentTime.Add(time.Hour).Format("15:04")}
 			slotList = append(slotList, slot)
 			currentTime = currentTime.Add(time.Hour)
 		}
@@ -207,9 +207,9 @@ func (s *pgStore) CheckAvailability(ctx context.Context, venueId int, date strin
 			return nil, ErrBookedSlots
 		}
 		defer rows.Close()
-		bookedSlots := []*Slot{}
+		bookedSlots := []Slot{}
 		for rows.Next() {
-			slot := &Slot{VenueID: 0, Date: "", StartTime: "", EndTime: ""}
+			slot := Slot{VenueID: 0, Date: "", StartTime: "", EndTime: ""}
 			err = rows.Scan(&slot.VenueID, &slot.Date, &slot.StartTime, &slot.EndTime)
 			slot.Date = slot.Date[0:10]
 			slot.StartTime = slot.StartTime[11:16]
@@ -230,9 +230,9 @@ func (s *pgStore) CheckAvailability(ctx context.Context, venueId int, date strin
 			logger.WithField("err", err.Error()).Error("Error parsing time")
 			return nil, ErrParseTime
 		}
-		var slotList []*Slot
+		var slotList []Slot
 		for currentTime.Before(venueClosing) {
-			slot := &Slot{VenueID: venueId, Date: date, StartTime: currentTime.Format("15:04"), EndTime: currentTime.Add(time.Hour).Format("15:04")}
+			slot := Slot{VenueID: venueId, Date: date, StartTime: currentTime.Format("15:04"), EndTime: currentTime.Add(time.Hour).Format("15:04")}
 			slotList = append(slotList, slot)
 			currentTime = currentTime.Add(time.Hour)
 		}

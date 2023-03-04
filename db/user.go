@@ -24,7 +24,7 @@ type LoginResponse struct {
 	Role     string 
 }
 
-func (s *pgStore) RegisterUser(ctx context.Context, user *User) error {
+func (s *pgStore) RegisterUser(ctx context.Context, user User) error {
 	err := s.db.QueryRow(RegisterUserQuery, &user.Name, &user.Contact, &user.Email, &user.Password, &user.City, &user.State, &user.Type).Scan(&user.ID)
 	if err != nil {
 		logger.WithField("err", err.Error()).Error("Error registering customer")
@@ -44,16 +44,16 @@ func (s *pgStore) CheckUser(ctx context.Context, email string, contact string) (
 	return flag, nil
 }
 
-func (s *pgStore) LoginUser(ctx context.Context, email string) (*LoginResponse, error) {
-	var loginResponse = &LoginResponse{}
+func (s *pgStore) LoginUser(ctx context.Context, email string) (LoginResponse, error) {
+	var loginResponse = LoginResponse{}
 	err := s.db.QueryRow(LoginUserQuery, &email).Scan(&loginResponse.Id, &loginResponse.Password, &loginResponse.Role)
 	switch {
 	case err == sql.ErrNoRows:
 		logger.WithField("err", err.Error()).Error("no user with that email id exists.")
-		return &LoginResponse{}, ErrUserNotExists
+		return LoginResponse{}, ErrUserNotExists
 	case err != nil:
 		logger.WithField("err", err.Error()).Error("error logging in customer")
-		return &LoginResponse{}, ErrLogin
+		return LoginResponse{}, ErrLogin
 	}
 	return loginResponse, nil
 }
