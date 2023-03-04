@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	db "github.com/amancooks08/BookMySport/db"
+	"github.com/amancooks08/BookMySport/domain"
 	logger "github.com/sirupsen/logrus"
 )
 
@@ -46,7 +47,7 @@ func LoginUser(CustomerServices Services) http.HandlerFunc {
 			return
 		}
 
-		var cu UserLogin
+		var cu domain.UserLogin
 		err := json.NewDecoder(req.Body).Decode(&cu)
 		if err != nil {
 			http.Error(rw, "Invalid request payload", http.StatusBadRequest)
@@ -66,7 +67,7 @@ func LoginUser(CustomerServices Services) http.HandlerFunc {
 				return
 			}
 			if token != "" {
-				response := &LoginResponse{
+				response := domain.LoginResponse{
 					Token:   token,
 					Message: "Login Successful",
 				}
@@ -78,7 +79,7 @@ func LoginUser(CustomerServices Services) http.HandlerFunc {
 				rw.Header().Add("Content-Type", "application/json")
 				rw.Write(respBytes)
 			} else {
-				msg := Message{Message: "error: invalid credentials"}
+				msg := domain.Message{Message: "error: invalid credentials"}
 				respBytes, err := json.Marshal(msg)
 				if err != nil {
 					http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
@@ -111,7 +112,7 @@ func GetAllVenues(CustomerServices Services) http.HandlerFunc {
 		}
 
 		if len(venues) == 0 {
-			msg := Message{Message: "no venues found"}
+			msg := domain.Message{Message: "no venues found"}
 			respBytes, err := json.Marshal(msg)
 			if err != nil {
 				http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
@@ -142,7 +143,7 @@ func GetVenue(CustomerServices Services) http.HandlerFunc {
 		}
 		venueID, err := strconv.Atoi(req.URL.Query().Get("venue_id"))
 		if err != nil || venueID <= 0 {
-			msg := Message{Message: "invalid venue id"}
+			msg := domain.Message{Message: "invalid venue id"}
 			respBytes, err := json.Marshal(msg)
 			if err != nil {
 				http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
@@ -156,7 +157,7 @@ func GetVenue(CustomerServices Services) http.HandlerFunc {
 		}
 		venue, err := CustomerServices.GetVenue(req.Context(), venueID)
 		if err != nil || err == db.ErrNoVenues {
-			msg := Message{Message: "no venue found"}
+			msg := domain.Message{Message: "no venue found"}
 			respBytes, err := json.Marshal(msg)
 			if err != nil {
 				http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
@@ -168,7 +169,7 @@ func GetVenue(CustomerServices Services) http.HandlerFunc {
 			rw.Write(respBytes)
 			return
 		} else if err != nil {
-			msg := Message{Message: err.Error()}
+			msg := domain.Message{Message: err.Error()}
 			respBytes, err := json.Marshal(msg)
 			if err != nil {
 				http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)

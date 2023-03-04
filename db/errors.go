@@ -6,19 +6,21 @@ import (
 
 // Custom Errors
 var (
-	ErrNameExists    = errors.New("error: name already exists")
-	ErrContactExists = errors.New("error: contact already exists")
-	ErrEmailExists   = errors.New("error: email already exists")
+	ErrNameExists    = errors.New("name already exists")
+	ErrContactExists = errors.New("contact already exists")
+	ErrEmailExists   = errors.New("email already exists")
 
 	ErrAddingVenue    = errors.New("error adding venue")
-	ErrNoVenues       = errors.New("error: no venues found")
-	ErrNoVenue        = errors.New("error: no venue found")
+	ErrNoVenues       = errors.New("no venues found")
+	ErrNoVenue        = errors.New("no venue found")
 	ErrFetchingVenues = errors.New("error fetching all venues")
 	ErrCheckVenue     = errors.New("error checking venue")
-	ErrInvalidVID     = errors.New("error: invalid venue id")
+	ErrInvalidVID     = errors.New("invalid venue id")
 	ErrFetchingVenue  = errors.New("error fetching venue")
 	ErrUpdatingVenue  = errors.New("error updating venue")
 	ErrDeletingVenue  = errors.New("error deleting venue")
+	ErrVenueOwnerNotFound = errors.New("user is not the owner of this venue")
+	ErrCheckVenueOwner = errors.New("error checking venue owner")
 
 	ErrCheckAvailability = errors.New("error checking availability")
 	ErrGetTimings        = errors.New("error getting venue opening and closing times")
@@ -26,7 +28,7 @@ var (
 	ErrCalculatePrice    = errors.New("error calculating price")
 	ErrParseTime         = errors.New("error parsing time")
 
-	ErrUserNotExists = errors.New("error: no user with that email id exist")
+	ErrUserNotExists = errors.New("no user with that email id exist")
 	ErrLogin         = errors.New("error logging in")
 
 	ErrCheckUser    = errors.New("error checking user")
@@ -36,13 +38,13 @@ var (
 	ErrCommitTx         = errors.New("error committing transaction")
 	ErrCheckPrice       = errors.New("error checking price")
 	ErrCheckGame        = errors.New("error checking game")
-	ErrGameNotAvailable = errors.New("error: game not available at this venue")
+	ErrGameNotAvailable = errors.New("game not available at this venue")
 	ErrCheckSlotStatus  = errors.New("error checking slot status")
 	ErrBookSlot         = errors.New("error booking slot")
-	ErrSlotNotAvailable = errors.New("error: slot already booked")
+	ErrSlotNotAvailable = errors.New("slot already booked")
 
 	ErrGetBooking           = errors.New("error getting booking")
-	ErrNoBookings           = errors.New("error: no bookings found")
+	ErrNoBookings           = errors.New("no bookings found")
 	ErrGetBookings          = errors.New("error getting all bookings")
 	ErrCancelBooking        = errors.New("error cancelling booking")
 	ErrUpdateSlots          = errors.New("error updating slots")

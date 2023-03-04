@@ -1,8 +1,6 @@
-package service
+package domain
 
 import (
-	"time"
-
 	"github.com/golang-jwt/jwt/v4"
 )
 
@@ -11,7 +9,7 @@ type UserLogin struct {
 	Password string `json:"password"`
 }
 type User struct {
-	Id       int    `json:"id"`
+	ID       int    `json:"id"`
 	Name     string `json:"name"`
 	Contact  string `json:"contact"`
 	Password string `json:"-"`
@@ -22,25 +20,31 @@ type User struct {
 }
 
 type Venue struct {
-	Id      int      `json:"id"`
+	ID      int      `json:"id"`
 	Name    string   `json:"name"`
-	Contact string   `json:"contact"`
+	Address string   `json:"address"`
 	City    string   `json:"city"`
 	State   string   `json:"state"`
-	Address string   `json:"address"`
+	Contact string   `json:"contact"`
 	Email   string   `json:"email"`
+	Opening string   `json:"opening_time"`
+	Closing string   `json:"closing_time"`
+	Price   float64  `json:"price"`
 	Games   []string `json:"games"`
+	Rating  float64  `json:"rating"`
+	OwnerID int 	 `json:"owner_id,omitempty"`
 }
 
 type Booking struct {
-	Id         int       `json:"id"`
-	BookedBy   int       `json:"booked_by"`
-	BookedAt   int       `json:"booked_at"`
-	Time       time.Time `json:"booking_time"`
-	StartTime  time.Time `json:"start_time"`
-	EndTime    time.Time `json:"end_time"`
-	Game       string    `json:"game"`
-	AmountPaid float64   `json:"amount"`
+	ID          int     `json:"id"`
+	CustomerID  int     `json:"customer_id"`
+	VenueID     int     `json:"venue_id"`
+	BookingDate string  `json:"booking_date"`
+	BookingTime string  `json:"booking_time"`
+	StartTime   string  `json:"start_time"`
+	EndTime     string  `json:"end_time"`
+	Game        string  `json:"game"`
+	AmountPaid  float64 `json:"amount"`
 }
 
 type Claims struct {
@@ -55,9 +59,6 @@ type LoginResponse struct {
 	Message string `json:"message"`
 }
 
-type dependencies struct {
-	CustomerServices Services
-}
 
 type Message struct {
 	Message string `json:"message"`

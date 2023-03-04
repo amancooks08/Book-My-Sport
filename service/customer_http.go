@@ -8,6 +8,7 @@ import (
 	"time"
 
 	db "github.com/amancooks08/BookMySport/db"
+	"github.com/amancooks08/BookMySport/domain"
 	"github.com/gorilla/mux"
 )
 
@@ -93,7 +94,7 @@ func GetAllBookings(CustomerServices Services) http.HandlerFunc {
 		}
 
 		type jsonResponse struct {
-			Bookings []*db.Booking
+			Bookings []domain.Booking
 		}
 
 		response := jsonResponse{Bookings: bookings}
@@ -127,7 +128,7 @@ func GetBooking(CustomerServices Services) http.HandlerFunc {
 		}
 
 		type jsonResponse struct {
-			Booking *db.Booking
+			Booking domain.Booking
 		}
 
 		response := jsonResponse{Booking: booking}
@@ -160,7 +161,7 @@ func CancelBooking(CustomerServices Services) http.HandlerFunc {
 		// Check if the booking belongs to the user
 		booking, err := CustomerServices.GetBooking(req.Context(), bookingID)
 		if err != nil {
-			msg := Message{
+			msg := domain.Message{
 				Message: "booking not found",
 			}
 			rw.WriteHeader(http.StatusNotFound)
@@ -170,7 +171,7 @@ func CancelBooking(CustomerServices Services) http.HandlerFunc {
 		}
 
 		if booking.CustomerID != userID {
-			msg := Message{
+			msg := domain.Message{
 				Message: "you are not authorized to cancel this booking",
 			}
 			rw.WriteHeader(http.StatusUnauthorized)

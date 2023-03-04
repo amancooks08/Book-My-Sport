@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/amancooks08/BookMySport/db"
+	"github.com/amancooks08/BookMySport/domain"
 	"github.com/amancooks08/BookMySport/service/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -67,12 +68,12 @@ func (suite *UserHandlerTestSuite) TestLoginUser() {
 		rw := httptest.NewRecorder()
 		ctx := req.Context()
 
-		requestBody := UserLogin{
+		requestBody := domain.UserLogin{
 			Email:    "cu1@gmail.com",
 			Password: "Password@123",
 		}
 
-		responseBody := LoginResponse{
+		responseBody := domain.LoginResponse{
 			Token:   "token",
 			Message: "Login Successful",
 		}
@@ -97,12 +98,12 @@ func (suite *UserHandlerTestSuite) TestLoginUser() {
 		rw := httptest.NewRecorder()
 		ctx := req.Context()
 
-		requestBody := UserLogin{
+		requestBody := domain.UserLogin{
 			Email:    "cu1@gmail.com",
 			Password: "Password@321",
 		}
 
-		responseBody := Message{
+		responseBody := domain.Message{
 			Message: "invalid credentials",
 		}
 
@@ -207,7 +208,7 @@ func (suite *UserHandlerTestSuite) TestGetAllVenues() {
 		rw := httptest.NewRecorder()
 		ctx := req.Context()
 
-		responseBody := Message{
+		responseBody := domain.Message{
 			Message: "No Venues Found",
 		}
 

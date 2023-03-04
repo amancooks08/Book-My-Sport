@@ -16,8 +16,8 @@ type Storer interface {
 	DeleteVenue(context.Context, int, int) error
 	CheckAvailability(context.Context, int, string) ([]*Slot, error)
 	BookSlot(context.Context, *Booking) (float64, error)
-	GetBooking(context.Context, int) (*Booking, error)
-	GetAllBookings(context.Context, int) ([]*Booking, error)
+	GetBooking(context.Context, int) (Booking, error)
+	GetAllBookings(context.Context, int) ([]Booking, error)
 	CancelBooking(context.Context, int) error
 }
 
@@ -29,11 +29,11 @@ const (
 	CheckUserQuery = `SELECT exists(SELECT 1 FROM "user" WHERE contact = $1 OR email = $2)`
 
 	// Venue Queries
-	InsertVenueQuery = `INSERT INTO "venue" (name, contact, city, state, address, email, opening_time, closing_time, price, games, rating)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) returning id`
+	InsertVenueQuery = `INSERT INTO "venue" (name, contact, city, state, address, email, opening_time, closing_time, price, games, rating, owner_id)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) returning id`
 	CheckVenueQuery      = `SELECT exists(SELECT 1 FROM "venue" WHERE name = $1 OR contact = $2 OR email = $3)`
-	GetAllVenuesQuery    = `SELECT * FROM "venue"`
-	GetVenueQuery        = `SELECT * FROM "venue" WHERE id = $1`
+	GetAllVenuesQuery    = `SELECT id, name, address, city, state, contact, email, opening_time, closing_time, price, games, rating FROM "venue"`
+	GetVenueQuery        = `SELECT id, name, address, city, state, contact, email, opening_time, closing_time, price, games, rating FROM "venue" WHERE id = $1`
 	CheckVenueOwnerQuery = `SELECT exists(SELECT 1 FROM "venue" WHERE id = $1 AND owner_id = $2)`
 	UpdateVenueQuery     = `UPDATE "venue" SET name = $1, contact = $2, city = $3, state = $4, address = $5, opening_time = $6, closing_time = $7, price = $8, games = $9, rating = $10 WHERE id = $11 AND owner_id = $12`
 	DeleteVenueQuery     = `DELETE FROM "venue" WHERE id = $1`

@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	db "github.com/amancooks08/BookMySport/db"
+	"github.com/amancooks08/BookMySport/domain"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	logger "github.com/sirupsen/logrus"
@@ -36,7 +37,7 @@ func registerUser(rw http.ResponseWriter, req *http.Request, CustomerServices Se
 	}
 
 	if user.Name == "" || user.Contact == "" || user.Email == "" || user.City == "" || user.State == "" || user.Password == "" {
-		msg := Message{
+		msg := domain.Message{
 			Message: "please don't leave any field empty",
 		}
 		json_response, _ := json.Marshal(msg)
@@ -55,8 +56,8 @@ func registerUser(rw http.ResponseWriter, req *http.Request, CustomerServices Se
 			http.Error(rw, "Failed to register user", http.StatusInternalServerError)
 			return
 		}
-		registerUserResponse := &User{
-			Id:      user.ID,
+		registerUserResponse := domain.User{
+			ID:      user.ID,
 			Name:    user.Name,
 			Contact: user.Contact,
 			Email:   user.Email,
@@ -68,7 +69,7 @@ func registerUser(rw http.ResponseWriter, req *http.Request, CustomerServices Se
 
 		json_response, err := json.Marshal(registerUserResponse)
 		if err != nil {
-			msg := Message{
+			msg := domain.Message{
 				Message: "Failed to register user",
 			}
 			json_response, _ := json.Marshal(msg)
@@ -81,7 +82,7 @@ func registerUser(rw http.ResponseWriter, req *http.Request, CustomerServices Se
 		rw.Header().Add("Content-Type", "application/json")
 		rw.Write(json_response)
 	} else {
-		msg := Message{
+		msg := domain.Message{
 			Message: "invalid contact or email details.",
 		}
 		json_response, _ := json.Marshal(msg)
@@ -160,4 +161,8 @@ func GetUserVenueId(req *http.Request, rw http.ResponseWriter) (int, int) {
 		return int(user_id), 0
 	}
 	return int(user_id), venueID
+}
+
+type dependencies struct {
+	CustomerServices Services
 }

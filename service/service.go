@@ -11,6 +11,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	logger "github.com/sirupsen/logrus"
+
+	domain "github.com/amancooks08/BookMySport/domain"
 )
 
 var secretKey = []byte("secret@987")
@@ -21,14 +23,14 @@ type Services interface {
 	LoginUser(ctx context.Context, email string, password string) (string, error)
 	AddVenue(ctx context.Context, venue *db.Venue) error
 	CheckVenue(ctx context.Context, name string, contact string, email string) error
-	GetAllVenues(ctx context.Context) ([]*db.Venue, error)
-	GetVenue(ctx context.Context, id int) (*db.Venue, error)
-	UpdateVenue(ctx context.Context, venue *db.Venue, id int) error
-	DeleteVenue(ctx context.Context, id int) error
+	GetAllVenues(ctx context.Context) ([]domain.Venue, error)
+	GetVenue(ctx context.Context, id int) (domain.Venue, error)
+	UpdateVenue(ctx context.Context, venue *db.Venue, userID int, id int) error
+	DeleteVenue(ctx context.Context, userID, id int) error
 	CheckAvailability(ctx context.Context, id int, date string) ([]*db.Slot, error)
 	BookSlot(ctx context.Context, b *db.Booking) (float64, error)
-	GetAllBookings(ctx context.Context, userId int) ([]*db.Booking, error)
-	GetBooking(ctx context.Context, bookingid int) (*db.Booking, error)
+	GetAllBookings(ctx context.Context, userId int) ([]domain.Booking, error)
+	GetBooking(ctx context.Context, bookingid int) (domain.Booking, error)
 	CancelBooking(ctx context.Context, id int) error
 }
 
@@ -65,13 +67,13 @@ func (cs *UserOps) RegisterUser(ctx context.Context, user *db.User) error {
 func (cs *UserOps) LoginUser(ctx context.Context, email string, password string) (string, error) {
 	loginResponse, err := cs.storer.LoginUser(ctx, email)
 	if bcrypt.CompareHashAndPassword([]byte(loginResponse.Password), []byte(password)) != nil {
-		return "", errors.New("error: invalid credentials")
+		return "", errors.New("invalid credentials")
 	}
 
 	token, err := GenerateToken(loginResponse)
 	if err != nil {
 		logger.WithField("err", err.Error()).Error("error generating jwt token for given userId")
-		return "", errors.New("error: error generating jwt token for given userId")
+		return "", errors.New("error generating jwt token for given userId")
 	}
 	return token, nil
 }
@@ -85,37 +87,74 @@ func (cs *UserOps) AddVenue(ctx context.Context, venue *db.Venue) error {
 	return nil
 }
 
-func (cs *UserOps) GetAllVenues(ctx context.Context) ([]*db.Venue, error) {
+func (cs *UserOps) GetAllVenues(ctx context.Context) ([]domain.Venue, error) {
 	venues, err := cs.storer.GetAllVenues(ctx)
 	if err != nil {
 		logger.WithField("err", err.Error()).Error("error getting venues")
 		return nil, errors.New("error getting venues")
 	}
-	return venues, nil
+	responseVenues := make([]domain.Venue, len(venues))
+	for i, venue := range venues {
+		responseVenues[i] = domain.Venue{
+			ID:          venue.ID,
+			Name:        venue.Name,
+			Address:     venue.Address,
+			City: 	  	 venue.City,
+			State:       venue.State,
+			Contact:     venue.Contact,
+			Email:       venue.Email,
+			Opening:     venue.Opening,
+			Closing:     venue.Closing,
+			Price:       venue.Price,
+			Games: 	 	 venue.Games,
+			Rating: 	 venue.Rating,
+			OwnerID:     venue.OwnerID,
+		}
+	}
+	return responseVenues, nil
 }
 
-func (cs *UserOps) GetVenue(ctx context.Context, id int) (*db.Venue, error) {
+func (cs *UserOps) GetVenue(ctx context.Context, id int) (domain.Venue, error) {
 	if id == 0 {
-		return nil, errors.New("invalid venue id")
+		return domain.Venue{}, errors.New("invalid venue id")
 	}
 	venue, err := cs.storer.GetVenue(ctx, id)
 	if err != nil && err == sql.ErrNoRows {
 		logger.WithField("err", err.Error()).Error("no venue found")
-		return nil, errors.New("no venue found")
+		return domain.Venue{}, errors.New("no venue found")
+	} else if err != nil {
+		logger.WithField("err", err.Error()).Error("error getting venue")
+		return domain.Venue{}, errors.New("error getting venue")
+	} 
+
+	respVenue := domain.Venue{
+		ID:          venue.ID,
+		Name:        venue.Name,
+		Address:     venue.Address,
+		City: 	  	 venue.City,
+		State:       venue.State,
+		Contact:     venue.Contact,
+		Email:       venue.Email,
+		Opening:     venue.Opening,
+		Closing:     venue.Closing,
+		Price:       venue.Price,
+		Games: 	 	 venue.Games,
+		Rating: 	 venue.Rating,
+		OwnerID:     venue.OwnerID,
 	}
-	return venue, nil
+	return respVenue, nil
 }
 
-func (cs *UserOps) UpdateVenue(ctx context.Context, venue *db.Venue, id int) error {
-	err := cs.storer.UpdateVenue(ctx, venue, id)
+func (cs *UserOps) UpdateVenue(ctx context.Context, venue *db.Venue, userID int, id int) error {
+	err := cs.storer.UpdateVenue(ctx, venue, userID, id)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (cs *UserOps) DeleteVenue(ctx context.Context, id int) error {
-	err := cs.storer.DeleteVenue(ctx, id)
+func (cs *UserOps) DeleteVenue(ctx context.Context, userID int, id int) error {
+	err := cs.storer.DeleteVenue(ctx, userID, id)
 	if err != nil {
 		return err
 	}
@@ -140,7 +179,7 @@ func (cs *UserOps) BookSlot(ctx context.Context, b *db.Booking) (float64, error)
 
 }
 
-func (cs *UserOps) GetAllBookings(ctx context.Context, userId int) ([]*db.Booking, error) {
+func (cs *UserOps) GetAllBookings(ctx context.Context, userId int) ([]domain.Booking, error) {
 	bookings, err := cs.storer.GetAllBookings(ctx, userId)
 	if err != nil {
 		logger.WithField("err", err.Error()).Error("error getting bookings")
@@ -149,23 +188,49 @@ func (cs *UserOps) GetAllBookings(ctx context.Context, userId int) ([]*db.Bookin
 	if len(bookings) == 0 {
 		return nil, errors.New("no bookings found")
 	}
-	return bookings, nil
+	responseBookings := make([]domain.Booking, len(bookings))
+	for i, booking := range bookings {
+		responseBookings[i] = domain.Booking{
+			ID:          booking.ID,
+			CustomerID:  booking.CustomerID,
+			VenueID:     booking.VenueID,
+			BookingDate: booking.BookingDate,
+			BookingTime: booking.BookingTime,
+			StartTime:   booking.StartTime,
+			EndTime:     booking.EndTime,
+			Game: 	     booking.Game,
+			AmountPaid:  booking.AmountPaid,
+		}
+	}
+	return responseBookings, nil
 }
 
-func (cs *UserOps) GetBooking(ctx context.Context, id int) (*db.Booking, error) {
+func (cs *UserOps) GetBooking(ctx context.Context, id int) (domain.Booking, error) {
 	booking, err := cs.storer.GetBooking(ctx, id)
 	if err != nil {
 		logger.WithField("err", err.Error()).Error("error getting booking")
-		return nil, errors.New("error: error getting booking")
+		return domain.Booking{}, errors.New("error getting booking")
 	}
-	return booking, err
+	responseBooking := domain.Booking{
+		ID:          booking.ID,
+		CustomerID:  booking.CustomerID,
+		VenueID:     booking.VenueID,
+		BookingDate: booking.BookingDate,
+		BookingTime: booking.BookingTime,
+		StartTime:   booking.StartTime,
+		EndTime:     booking.EndTime,
+		Game: 	     booking.Game,
+		AmountPaid:  booking.AmountPaid,
+	}
+
+	return responseBooking, err
 }
 
 func (cs *UserOps) CancelBooking(ctx context.Context, id int) error {
 	err := cs.storer.CancelBooking(ctx, id)
 	if err != nil {
 		logger.WithField("err", err.Error()).Error("error cancelling booking")
-		return errors.New("error: error cancelling booking")
+		return errors.New("error cancelling booking")
 	}
 	return nil
 }
@@ -176,7 +241,7 @@ func (cs *UserOps) CheckUser(ctx context.Context, email string, contact string) 
 		return errors.New("error checking user")
 	}
 	if flag {
-		return errors.New("error: user already exists")
+		return errors.New("user already exists")
 	}
 	return nil
 }
@@ -185,7 +250,7 @@ func (cs *UserOps) CheckVenue(ctx context.Context, name string, contact string, 
 	flag, err := cs.storer.CheckVenue(ctx, name, contact, email)
 	if flag {
 		logger.WithField("err", err.Error()).Error("error: venue already exists")
-		return errors.New("error: venue already exists")
+		return errors.New("venue already exists")
 	}
 	return nil
 }

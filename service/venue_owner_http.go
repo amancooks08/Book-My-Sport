@@ -8,6 +8,7 @@ import (
 	"time"
 
 	db "github.com/amancooks08/BookMySport/db"
+	"github.com/amancooks08/BookMySport/domain"
 	"github.com/gorilla/mux"
 )
 
@@ -29,7 +30,7 @@ func AddVenue(CustomerServices Services) http.HandlerFunc {
 
 		err = CustomerServices.CheckVenue(req.Context(), venue.Name, venue.Contact, venue.Email)
 		if err != nil {
-			msg := Message{
+			msg := domain.Message{
 				Message: fmt.Sprintf("%s", err),
 			}
 			json_response, _ := json.Marshal(msg)
@@ -41,7 +42,7 @@ func AddVenue(CustomerServices Services) http.HandlerFunc {
 		}
 
 		if venue.Name == "" || venue.Address == "" || venue.City == "" || venue.State == "" || len(venue.Games) == 0 {
-			msg := Message{
+			msg := domain.Message{
 				Message: "please don't leave any field empty",
 			}
 			json_response, _ := json.Marshal(msg)
@@ -56,7 +57,7 @@ func AddVenue(CustomerServices Services) http.HandlerFunc {
 		if validateContact(venue.Contact) && validateEmail(venue.Email) {
 			err := CustomerServices.AddVenue(req.Context(), &venue)
 			if err != nil {
-				msg := Message{
+				msg := domain.Message{
 					Message: "failed to add venue",
 				}
 
@@ -67,7 +68,7 @@ func AddVenue(CustomerServices Services) http.HandlerFunc {
 				return
 			}
 		} else {
-			msg := Message{
+			msg := domain.Message{
 				Message: "invalid email or contact",
 			}
 
@@ -79,7 +80,7 @@ func AddVenue(CustomerServices Services) http.HandlerFunc {
 		}
 
 		// Write the response
-		response := &Venue{
+		response := domain.Venue{
 			ID:      venue.ID,
 			Name:    venue.Name,
 			Address: venue.Address,
@@ -128,7 +129,7 @@ func UpdateVenue(CustomerServices Services) http.HandlerFunc {
 
 		userID, venueID := GetUserVenueId(req, rw)
 		if userID == 0 || venueID == 0 {
-			msg := Message{
+			msg := domain.Message{
 				Message: "invalid user or venue ID",
 			}
 			json_response, _ := json.Marshal(msg)
@@ -145,7 +146,6 @@ func UpdateVenue(CustomerServices Services) http.HandlerFunc {
 
 		if validateContact(venue.Contact) && validateEmail(venue.Email) {
 
-			
 			err := CustomerServices.UpdateVenue(req.Context(), &venue, userID, venueID)
 			if err != nil {
 				http.Error(rw, "error: updating venue", http.StatusInternalServerError)
@@ -223,7 +223,7 @@ func DeleteVenue(CustomerServices Services) http.HandlerFunc {
 		//Check if "venue_id" key is not found in vars
 
 		if userID == 0 || venueID == 0 {
-			msg := Message{
+			msg := domain.Message{
 				Message: "invalid user or venue ID",
 			}
 			json_response, _ := json.Marshal(msg)
@@ -239,7 +239,7 @@ func DeleteVenue(CustomerServices Services) http.HandlerFunc {
 			return
 		}
 
-		resp := Message{
+		resp := domain.Message{
 			Message: "venue deleted successfully",
 		}
 		respBytes, err := json.Marshal(resp)

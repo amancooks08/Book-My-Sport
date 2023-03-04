@@ -10,15 +10,15 @@ import (
 )
 
 type Booking struct {
-	ID          int     `json:"id"`
-	CustomerID  int     `json:"customer_id"`
-	VenueID     int     `json:"venue_id"`
-	BookingDate string  `json:"booking_date"`
-	BookingTime string  `json:"booking_time"`
-	StartTime   string  `json:"start_time"`
-	EndTime     string  `json:"end_time"`
-	Game        string  `json:"game"`
-	AmountPaid  float64 `json:"amount"`
+	ID          int     
+	CustomerID  int     
+	VenueID     int     
+	BookingDate string  
+	BookingTime string  
+	StartTime   string  
+	EndTime     string  
+	Game        string  
+	AmountPaid  float64 
 }
 
 func (s *pgStore) BookSlot(ctx context.Context, b *Booking) (float64, error) {
@@ -35,10 +35,12 @@ func (s *pgStore) BookSlot(ctx context.Context, b *Booking) (float64, error) {
 		logger.WithField("err", err.Error()).Error("error checking price")
 		return 0.0, ErrCheckPrice
 	}
+
 	// Calculate the number of Slots byfinding the  duration
 	st, _ := time.Parse("15:04:05", b.StartTime)
 	et, _ := time.Parse("15:04:05", b.EndTime)
 	slots = int(et.Sub(st).Hours())
+
 	// Check if the game is present at the venue or not
 	var game bool
 	err = s.db.QueryRow(CheckGameQuery, b.VenueID, b.Game).Scan(&game)
@@ -46,9 +48,11 @@ func (s *pgStore) BookSlot(ctx context.Context, b *Booking) (float64, error) {
 		logger.WithField("err", err.Error()).Error("error checking game")
 		return 0.0, ErrCheckGame
 	}
+
 	if !game {
 		return 0.0, ErrGameNotAvailable
 	}
+
 	// Calculate Amount as a double value
 	amount := float64(price * slots)
 	var flag int
@@ -57,6 +61,7 @@ func (s *pgStore) BookSlot(ctx context.Context, b *Booking) (float64, error) {
 		logger.WithField("err", err.Error()).Error("error checking slot status")
 		return 0.0, ErrCheckSlotStatus
 	}
+
 	fmt.Println(flag)
 	if flag == 0 {
 		//Insert the booking details in the booking table and return id
@@ -71,23 +76,24 @@ func (s *pgStore) BookSlot(ctx context.Context, b *Booking) (float64, error) {
 	} else {
 		return 0.0, ErrSlotNotAvailable
 	}
+	
 	tx.Commit()
 	return amount, err
 
 }
 
-func (s *pgStore) GetBooking(ctx context.Context, id int) (*Booking, error) {
-	booking := &Booking{}
+func (s *pgStore) GetBooking(ctx context.Context, id int) (Booking, error) {
+	booking := Booking{}
 	err := s.db.QueryRow(GetBookingQuery, &id).Scan(&booking.ID, &booking.CustomerID, &booking.VenueID, &booking.BookingTime, &booking.BookingDate, &booking.StartTime, &booking.EndTime, &booking.Game, &booking.AmountPaid)
 	if err != nil {
 		logger.WithField("err", err.Error()).Error("error getting booking")
-		return nil, ErrGetBooking
+		return Booking{}, ErrGetBooking
 	}
 	return booking, nil
 }
 
-func (s *pgStore) GetAllBookings(ctx context.Context, userId int) ([]*Booking, error) {
-	bookings := []*Booking{}
+func (s *pgStore) GetAllBookings(ctx context.Context, userId int) ([]Booking, error) {
+	bookings := []Booking{}
 
 	rows, err := s.db.Query(GetAllBookingsQuery, &userId)
 	defer rows.Close()
@@ -101,14 +107,14 @@ func (s *pgStore) GetAllBookings(ctx context.Context, userId int) ([]*Booking, e
 	}
 
 	for rows.Next() {
-		booking := &Booking{}
+		booking := Booking{}
 		err := rows.Scan(&booking.ID, &booking.CustomerID, &booking.VenueID, &booking.BookingTime, &booking.BookingDate, &booking.StartTime, &booking.EndTime, &booking.Game, &booking.AmountPaid)
 		if err != nil {
 			logger.WithField("err", err.Error()).Error("error getting all bookings")
 			return nil, ErrGetBookings
 		}
 
-		booking = &Booking{
+		booking = Booking{
 			ID:          booking.ID,
 			CustomerID:  booking.CustomerID,
 			VenueID:     booking.VenueID,
