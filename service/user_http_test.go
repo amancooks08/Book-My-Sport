@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/amancooks08/BookMySport/db"
-	"github.com/amancooks08/BookMySport/mocks"
+	"github.com/amancooks08/BookMySport/service/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )

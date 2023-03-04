@@ -120,13 +120,13 @@ func (_m *Services) CheckVenue(ctx context.Context, name string, contact string,
 	return r0
 }
 
-// DeleteVenue provides a mock function with given fields: ctx, id
-func (_m *Services) DeleteVenue(ctx context.Context, id int) error {
-	ret := _m.Called(ctx, id)
+// DeleteVenue provides a mock function with given fields: ctx, userID, id
+func (_m *Services) DeleteVenue(ctx context.Context, userID int, id int) error {
+	ret := _m.Called(ctx, userID, id)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int) error); ok {
-		r0 = rf(ctx, id)
+	if rf, ok := ret.Get(0).(func(context.Context, int, int) error); ok {
+		r0 = rf(ctx, userID, id)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -276,13 +276,13 @@ func (_m *Services) RegisterUser(ctx context.Context, user *db.User) error {
 	return r0
 }
 
-// UpdateVenue provides a mock function with given fields: ctx, venue, id
-func (_m *Services) UpdateVenue(ctx context.Context, venue *db.Venue, id int) error {
-	ret := _m.Called(ctx, venue, id)
+// UpdateVenue provides a mock function with given fields: ctx, venue, userID, id
+func (_m *Services) UpdateVenue(ctx context.Context, venue *db.Venue, userID int, id int) error {
+	ret := _m.Called(ctx, venue, userID, id)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *db.Venue, int) error); ok {
-		r0 = rf(ctx, venue, id)
+	if rf, ok := ret.Get(0).(func(context.Context, *db.Venue, int, int) error); ok {
+		r0 = rf(ctx, venue, userID, id)
 	} else {
 		r0 = ret.Error(0)
 	}

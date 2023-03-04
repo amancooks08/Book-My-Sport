@@ -12,8 +12,8 @@ type Storer interface {
 	CheckVenue(context.Context, string, string, string) (bool, error)
 	GetAllVenues(context.Context) ([]*Venue, error)
 	GetVenue(context.Context, int) (*Venue, error)
-	UpdateVenue(context.Context, *Venue, int) error
-	DeleteVenue(context.Context, int) error
+	UpdateVenue(context.Context, *Venue, int, int) error
+	DeleteVenue(context.Context, int, int) error
 	CheckAvailability(context.Context, int, string) ([]*Slot, error)
 	BookSlot(context.Context, *Booking) (float64, error)
 	GetBooking(context.Context, int) (*Booking, error)
@@ -34,7 +34,8 @@ const (
 	CheckVenueQuery      = `SELECT exists(SELECT 1 FROM "venue" WHERE name = $1 OR contact = $2 OR email = $3)`
 	GetAllVenuesQuery    = `SELECT * FROM "venue"`
 	GetVenueQuery        = `SELECT * FROM "venue" WHERE id = $1`
-	UpdateVenueQuery     = `UPDATE "venue" SET name = $1, contact = $2, city = $3, state = $4, address = $5, opening_time = $6, closing_time = $7, price = $8, games = $9, rating = $10 WHERE id = $11`
+	CheckVenueOwnerQuery = `SELECT exists(SELECT 1 FROM "venue" WHERE id = $1 AND owner_id = $2)`
+	UpdateVenueQuery     = `UPDATE "venue" SET name = $1, contact = $2, city = $3, state = $4, address = $5, opening_time = $6, closing_time = $7, price = $8, games = $9, rating = $10 WHERE id = $11 AND owner_id = $12`
 	DeleteVenueQuery     = `DELETE FROM "venue" WHERE id = $1`
 	GetVenueTimingsQuery = `SELECT opening_time, closing_time FROM "venue" WHERE id = $1`
 	CheckGameQuery       = `SELECT exists(SELECT 1 FROM "venue" WHERE id = $1 AND $2 = ANY(games))`

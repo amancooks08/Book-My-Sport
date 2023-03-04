@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/lib/pq"
@@ -24,6 +23,7 @@ type Venue struct {
 	Price   float64  `json:"price"`
 	Games   []string `json:"games"`
 	Rating  float64  `json:"rating"`
+	OwnerID int      `json:"owner_id"`
 }
 
 // AddVenue adds a venue to the database
@@ -58,7 +58,7 @@ func (s *pgStore) GetAllVenues(ctx context.Context) ([]*Venue, error) {
 	}
 	defer rows.Close()
 	for rows.Next() {
-		venue := &Venue{ID: 0, Name: "", Contact: "", City: "", State: "", Address: "", Email: "", Opening: "", Closing: "", Price: 0, Games: []string{}, Rating: 0}
+		venue := &Venue{}
 		err = rows.Scan(&venue.ID, &venue.Name, &venue.Address, &venue.City, &venue.State, &venue.Contact, &venue.Email, &venue.Opening, &venue.Closing, &venue.Price, pq.Array(&venue.Games), &venue.Rating)
 		if err != nil {
 			logger.WithField("err", err.Error()).Error("Error fetching all venues")
@@ -106,8 +106,22 @@ func (s *pgStore) GetVenue(ctx context.Context, id int) (*Venue, error) {
 }
 
 // UpdateVenue updates a venue in the database
-func (s *pgStore) UpdateVenue(ctx context.Context, venue *Venue, id int) error {
-	_, err := s.db.Exec(UpdateVenueQuery, &venue.Name, &venue.Contact, &venue.City, &venue.State, &venue.Address, &venue.Opening, &venue.Closing, &venue.Price, pq.Array(&venue.Games), &venue.Rating, &id)
+func (s *pgStore) UpdateVenue(ctx context.Context, venue *Venue, userID int,id int) error {
+	// Check if the user is owner of the venue
+	var flag bool
+	err := s.db.QueryRow(CheckVenueOwnerQuery, &id, &userID).Scan(&flag)
+	if err != nil && err == sql.ErrNoRows {
+		logger.WithField("err", err.Error()).Error("error checking venue owner")
+		return ErrCheckVenueOwner
+	} else if err != nil {
+		logger.WithField("err", err.Error()).Error("error checking venue owner")
+		return ErrCheckVenueOwner
+	}
+	if !flag {
+		logger.WithField("err", err.Error()).Error("user is not the owner of this venue")
+		return ErrVenueOwnerNotFound
+	}
+	_, err = s.db.Exec(UpdateVenueQuery, &venue.Name, &venue.Contact, &venue.City, &venue.State, &venue.Address, &venue.Opening, &venue.Closing, &venue.Price, pq.Array(&venue.Games), &venue.Rating, &id, &userID)
 	if err != nil {
 		logger.WithField("err", err.Error()).Error("Error updating venue")
 		return ErrUpdatingVenue
@@ -116,8 +130,22 @@ func (s *pgStore) UpdateVenue(ctx context.Context, venue *Venue, id int) error {
 }
 
 // DeleteVenue deletes a venue from the database
-func (s *pgStore) DeleteVenue(ctx context.Context, id int) error {
-	_, err := s.db.Exec(DeleteSlotQuery, &id)
+func (s *pgStore) DeleteVenue(ctx context.Context, userID int, id int) error {
+	var flag bool
+	err := s.db.QueryRow(CheckVenueOwnerQuery, &id, &userID).Scan(&flag)
+	if err != nil && err == sql.ErrNoRows {
+		logger.WithField("err", err.Error()).Error("error checking venue owner")
+		return ErrCheckVenueOwner
+	} else if err != nil {
+		logger.WithField("err", err.Error()).Error("error checking venue owner")
+		return ErrCheckVenueOwner
+	}
+	if !flag {
+		logger.WithField("err", err.Error()).Error("user is not the owner of this venue")
+		return ErrVenueOwnerNotFound
+	}
+
+	_, err = s.db.Exec(DeleteSlotQuery, &id)
 	if err != nil {
 		logger.WithField("err", err.Error()).Error("Error deleting venue")
 		return ErrDeletingVenue
@@ -212,7 +240,6 @@ func (s *pgStore) CheckAvailability(ctx context.Context, venueId int, date strin
 		}
 		for _, bookedSlot := range bookedSlots {
 			for i, slot := range slotList {
-				fmt.Println(slot.StartTime, bookedSlot.StartTime)
 				if slot.StartTime == bookedSlot.StartTime {
 					slotList = append(slotList[:i], slotList[i+1:]...)
 				}

@@ -148,9 +148,34 @@ func CancelBooking(CustomerServices Services) http.HandlerFunc {
 		}
 
 		vars := mux.Vars(req)
-		bookingID, err := strconv.Atoi(vars["booking_id"])
+		bookingID, err := strconv.Atoi(vars["bookingID"])
 		if err != nil {
 			http.Error(rw, "Invalid booking ID", http.StatusBadRequest)
+			return
+		}
+
+		// Get the user_id from the jwt claims
+		userID, _ := GetUserVenueId(req, rw)
+
+		// Check if the booking belongs to the user
+		booking, err := CustomerServices.GetBooking(req.Context(), bookingID)
+		if err != nil {
+			msg := Message{
+				Message: "booking not found",
+			}
+			rw.WriteHeader(http.StatusNotFound)
+			rw.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(rw).Encode(msg)
+			return
+		}
+
+		if booking.CustomerID != userID {
+			msg := Message{
+				Message: "you are not authorized to cancel this booking",
+			}
+			rw.WriteHeader(http.StatusUnauthorized)
+			rw.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(rw).Encode(msg)
 			return
 		}
 
