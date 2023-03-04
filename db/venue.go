@@ -11,19 +11,19 @@ import (
 )
 
 type Venue struct {
-	ID      int      `json:"id"`
-	Name    string   `json:"name"`
-	Address string   `json:"address"`
-	City    string   `json:"city"`
-	State   string   `json:"state"`
-	Contact string   `json:"contact"`
-	Email   string   `json:"email"`
-	Opening string   `json:"opening_time"`
-	Closing string   `json:"closing_time"`
-	Price   float64  `json:"price"`
-	Games   []string `json:"games"`
-	Rating  float64  `json:"rating"`
-	OwnerID int      `json:"owner_id"`
+	ID      int      
+	Name    string   
+	Address string   
+	City    string   
+	State   string   
+	Contact string   
+	Email   string   
+	Opening string   
+	Closing string   
+	Price   float64  
+	Games   []string 
+	Rating  float64  
+	OwnerID int      
 }
 
 // AddVenue adds a venue to the database
@@ -106,7 +106,7 @@ func (s *pgStore) GetVenue(ctx context.Context, id int) (*Venue, error) {
 }
 
 // UpdateVenue updates a venue in the database
-func (s *pgStore) UpdateVenue(ctx context.Context, venue *Venue, userID int,id int) error {
+func (s *pgStore) UpdateVenue(ctx context.Context, venue *Venue, userID int, id int) error {
 	// Check if the user is owner of the venue
 	var flag bool
 	err := s.db.QueryRow(CheckVenueOwnerQuery, &id, &userID).Scan(&flag)
@@ -196,7 +196,7 @@ func (s *pgStore) CheckAvailability(ctx context.Context, venueId int, date strin
 
 		var slotList []*Slot
 		for currentTime.Before(venueClosing) {
-			slot := &Slot{VenueId: venueId, Date: date, StartTime: currentTime.Format("15:04"), EndTime: currentTime.Add(time.Hour).Format("15:04")}
+			slot := &Slot{VenueID: venueId, Date: date, StartTime: currentTime.Format("15:04"), EndTime: currentTime.Add(time.Hour).Format("15:04")}
 			slotList = append(slotList, slot)
 			currentTime = currentTime.Add(time.Hour)
 		}
@@ -211,8 +211,8 @@ func (s *pgStore) CheckAvailability(ctx context.Context, venueId int, date strin
 		defer rows.Close()
 		bookedSlots := []*Slot{}
 		for rows.Next() {
-			slot := &Slot{VenueId: 0, Date: "", StartTime: "", EndTime: ""}
-			err = rows.Scan(&slot.VenueId, &slot.Date, &slot.StartTime, &slot.EndTime)
+			slot := &Slot{VenueID: 0, Date: "", StartTime: "", EndTime: ""}
+			err = rows.Scan(&slot.VenueID, &slot.Date, &slot.StartTime, &slot.EndTime)
 			slot.Date = slot.Date[0:10]
 			slot.StartTime = slot.StartTime[11:16]
 			slot.EndTime = slot.EndTime[11:16]
@@ -234,7 +234,7 @@ func (s *pgStore) CheckAvailability(ctx context.Context, venueId int, date strin
 		}
 		var slotList []*Slot
 		for currentTime.Before(venueClosing) {
-			slot := &Slot{VenueId: venueId, Date: date, StartTime: currentTime.Format("15:04"), EndTime: currentTime.Add(time.Hour).Format("15:04")}
+			slot := &Slot{VenueID: venueId, Date: date, StartTime: currentTime.Format("15:04"), EndTime: currentTime.Add(time.Hour).Format("15:04")}
 			slotList = append(slotList, slot)
 			currentTime = currentTime.Add(time.Hour)
 		}

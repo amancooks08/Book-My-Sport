@@ -9,10 +9,10 @@ import (
 )
 
 type Slot struct {
-	VenueId   int    `json:"venue_id"`
-	Date      string `json:"date"`
-	StartTime string `json:"start_time"`
-	EndTime   string `json:"end_time"`
+	VenueID   int
+	Date      string
+	StartTime string
+	EndTime   string
 }
 
 func generateSlots(db *sqlx.DB, venueID int, startTime string, endTime string, day string, bookingId int) error {

@@ -27,7 +27,7 @@ type Services interface {
 	GetVenue(ctx context.Context, id int) (domain.Venue, error)
 	UpdateVenue(ctx context.Context, venue *db.Venue, userID int, id int) error
 	DeleteVenue(ctx context.Context, userID, id int) error
-	CheckAvailability(ctx context.Context, id int, date string) ([]*db.Slot, error)
+	CheckAvailability(ctx context.Context, id int, date string) ([]domain.Slot, error)
 	BookSlot(ctx context.Context, b *db.Booking) (float64, error)
 	GetAllBookings(ctx context.Context, userId int) ([]domain.Booking, error)
 	GetBooking(ctx context.Context, bookingid int) (domain.Booking, error)
@@ -161,12 +161,22 @@ func (cs *UserOps) DeleteVenue(ctx context.Context, userID int, id int) error {
 	return nil
 }
 
-func (cs *UserOps) CheckAvailability(ctx context.Context, venueId int, date string) ([]*db.Slot, error) {
+func (cs *UserOps) CheckAvailability(ctx context.Context, venueId int, date string) ([]domain.Slot, error) {
 	slots, err := cs.storer.CheckAvailability(ctx, venueId, date)
 	if err != nil {
 		return nil, errors.New("error checking availability")
 	}
-	return slots, nil
+	respSlots := make([]domain.Slot, len(slots))
+	for i, slot := range slots {
+		respSlots[i] = domain.Slot{
+			VenueID: 	slot.VenueID,
+			Date:    	slot.Date,
+			StartTime:  slot.StartTime,
+			EndTime: 	slot.EndTime,
+		}
+	}
+
+	return respSlots, nil
 }
 
 func (cs *UserOps) BookSlot(ctx context.Context, b *db.Booking) (float64, error) {

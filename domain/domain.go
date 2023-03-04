@@ -32,7 +32,7 @@ type Venue struct {
 	Price   float64  `json:"price"`
 	Games   []string `json:"games"`
 	Rating  float64  `json:"rating"`
-	OwnerID int 	 `json:"owner_id,omitempty"`
+	OwnerID int 	 `json:"-"`
 }
 
 type Booking struct {
@@ -45,6 +45,13 @@ type Booking struct {
 	EndTime     string  `json:"end_time"`
 	Game        string  `json:"game"`
 	AmountPaid  float64 `json:"amount"`
+}
+
+type Slot struct {
+	VenueID   int    `json:"venue_id"`
+	Date      string `json:"date"`
+	StartTime string `json:"start_time"`
+	EndTime   string `json:"end_time"`
 }
 
 type Claims struct {

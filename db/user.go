@@ -8,20 +8,20 @@ import (
 )
 
 type User struct {
-	ID       int    `json:"id"`
-	Name     string `json:"name"`
-	Contact  string `json:"contact"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	City     string `json:"city"`
-	State    string `json:"state"`
-	Type     string `json:"type"`
+	ID       int    
+	Name     string 
+	Contact  string 
+	Email    string 
+	Password string 
+	City     string 
+	State    string 
+	Type     string 
 }
 
 type LoginResponse struct {
-	Id       int    `db:"id" json:"id"`
-	Password string `db:"password" json:"password"`
-	Role     string `db:"type" json:"type"`
+	Id       int    
+	Password string 
+	Role     string 
 }
 
 func (s *pgStore) RegisterUser(ctx context.Context, user *User) error {
