@@ -10,7 +10,6 @@ import (
 
 	"github.com/amancooks08/BookMySport/domain"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/gorilla/mux"
 	logger "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -110,13 +109,13 @@ func HashPassword(password string) (string, error) {
 	return string(bytes), err
 }
 
-func GetUserVenueId(req *http.Request, rw http.ResponseWriter) (int, int) {
+func GetUserID(req *http.Request, rw http.ResponseWriter) (int) {
 	header := req.Header.Get("Authorization")
 
 	// Check if the header is missing or invalid
 	if header == "" || !strings.HasPrefix(header, "Bearer ") {
-		http.Error(rw, "Unauthorized", http.StatusUnauthorized)
-		return 0, 0
+		http.Error(rw, "Unauthorized7", http.StatusUnauthorized)
+		return 0
 	}
 
 	// Parse the JWT token from the header
@@ -133,33 +132,40 @@ func GetUserVenueId(req *http.Request, rw http.ResponseWriter) (int, int) {
 	// Check if there was an error parsing the token
 	if err != nil {
 		http.Error(rw, "Unauthorized", http.StatusUnauthorized)
-		return 0, 0
+		return 0
 	}
 
 	// Check if the token is valid and has not expired
 	if !token.Valid {
 		http.Error(rw, "Unauthorized", http.StatusUnauthorized)
-		return 0, 0
+		return 0
 	}
 	// Get the claims from the token
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !(ok && token.Valid) {
 		http.Error(rw, "Token Invalid", http.StatusUnauthorized)
-		return 0, 0
+		return 0
 	}
 
 	userID, ok := claims["user_id"].(float64)
 	if !ok || !token.Valid {
 		http.Error(rw, "Unauthorized", http.StatusUnauthorized)
-		return 0, 0
+		return 0
 	}
-	vars := mux.Vars(req)
-	venueID, err := strconv.Atoi(vars["venueID"])
+	return int(userID)
+}
+
+func GetVenueID(req *http.Request) int {
+	if(req.URL.Query().Get("venueID") == ""){
+		return 0
+	}
+	venueID, err := strconv.Atoi(req.URL.Query().Get("venueID"))
 	if err != nil {
-		logger.WithField("error", err).Error("Error while parsing venue_id")
-		return int(userID), 0
+		logger.WithField("error", err).Error("error while parsing venueID")
+		return 0
 	}
-	return int(userID), venueID
+
+	return venueID
 }
 
 type dependencies struct {

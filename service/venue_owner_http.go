@@ -4,11 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/amancooks08/BookMySport/domain"
-	"github.com/gorilla/mux"
 )
 
 // Add a  venue
@@ -51,7 +49,7 @@ func AddVenue(CustomerServices Services) http.HandlerFunc {
 			rw.Write(json_response)
 			return
 		}
-		userID, _ := GetUserVenueId(req, rw)
+		userID := GetUserID(req, rw)
 		venue.OwnerID = userID
 		if validateContact(venue.Contact) && validateEmail(venue.Email) {
 			err := CustomerServices.AddVenue(req.Context(), venue)
@@ -126,7 +124,8 @@ func UpdateVenue(CustomerServices Services) http.HandlerFunc {
 
 		//Get the userID and venueID from the jwt token and URL respectively
 
-		userID, venueID := GetUserVenueId(req, rw)
+		userID:= GetUserID(req, rw)
+		venueID := GetVenueID(req)
 		if userID == 0 || venueID == 0 {
 			msg := domain.Message{
 				Message: "invalid user or venue ID",
@@ -171,19 +170,21 @@ func CheckAvailability(CustomerServices Services) http.HandlerFunc {
 			rw.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		vars := mux.Vars(req)
-		venueID, err := strconv.Atoi(vars["venue_id"])
-		if err != nil {
-			http.Error(rw, fmt.Sprint(err)+": Invalid ID", http.StatusBadRequest)
-			return
-		}
+		// vars := mux.Vars(req)
+		// venueID, err := strconv.Atoi(vars["venue_id"])
+		// if err != nil {
+		// 	http.Error(rw, fmt.Sprint(err)+": Invalid ID", http.StatusBadRequest)
+		// 	return
+		// }
+
+		venueID := GetVenueID(req)
+
 		// Check if date is present or not
-		var date time.Time
 		if req.URL.Query().Get("date") == "" {
 			http.Error(rw, "please enter date if not entered or correct it if not added properly.", http.StatusBadRequest)
 			return
 		}
-		date, err = time.Parse("2006-01-02", req.URL.Query().Get("date"))
+		date, err := time.Parse("2006-01-02", req.URL.Query().Get("date"))
 		if err != nil {
 			http.Error(rw, "invalid date format", http.StatusBadRequest)
 			return
@@ -218,7 +219,8 @@ func DeleteVenue(CustomerServices Services) http.HandlerFunc {
 			rw.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		userID, venueID := GetUserVenueId(req, rw)
+		userID := GetUserID(req, rw)
+		venueID := GetVenueID(req)
 		//Check if "venue_id" key is not found in vars
 
 		if userID == 0 || venueID == 0 {

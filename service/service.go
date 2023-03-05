@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/amancooks08/BookMySport/db"
@@ -90,18 +91,18 @@ func (cs *UserOps) LoginUser(ctx context.Context, email string, password string)
 
 func (cs *UserOps) AddVenue(ctx context.Context, venue domain.Venue) error {
 	dbVenue := db.Venue{
-		Name:        venue.Name,
-		Address:     venue.Address,
-		City: 	  	 venue.City,
-		State:       venue.State,
-		Contact:     venue.Contact,
-		Email:       venue.Email,
-		Opening:     venue.Opening,
-		Closing:     venue.Closing,
-		Price:       venue.Price,
-		Games: 	 	 venue.Games,
-		Rating: 	 venue.Rating,
-		OwnerID:     venue.OwnerID,
+		Name:    venue.Name,
+		Address: venue.Address,
+		City:    venue.City,
+		State:   venue.State,
+		Contact: venue.Contact,
+		Email:   venue.Email,
+		Opening: venue.Opening,
+		Closing: venue.Closing,
+		Price:   venue.Price,
+		Games:   venue.Games,
+		Rating:  venue.Rating,
+		OwnerID: venue.OwnerID,
 	}
 
 	err := cs.storer.AddVenue(ctx, dbVenue)
@@ -116,31 +117,32 @@ func (cs *UserOps) GetAllVenues(ctx context.Context) ([]domain.Venue, error) {
 	venues, err := cs.storer.GetAllVenues(ctx)
 	if err != nil {
 		logger.WithField("err", err.Error()).Error("error getting venues")
-		return nil, errors.New("error getting venues")
+		return nil, err
 	}
 	responseVenues := make([]domain.Venue, len(venues))
 	for i, venue := range venues {
 		responseVenues[i] = domain.Venue{
-			ID:          venue.ID,
-			Name:        venue.Name,
-			Address:     venue.Address,
-			City: 	  	 venue.City,
-			State:       venue.State,
-			Contact:     venue.Contact,
-			Email:       venue.Email,
-			Opening:     venue.Opening,
-			Closing:     venue.Closing,
-			Price:       venue.Price,
-			Games: 	 	 venue.Games,
-			Rating: 	 venue.Rating,
-			OwnerID:     venue.OwnerID,
+			ID:      venue.ID,
+			Name:    venue.Name,
+			Address: venue.Address,
+			City:    venue.City,
+			State:   venue.State,
+			Contact: venue.Contact,
+			Email:   venue.Email,
+			Opening: venue.Opening,
+			Closing: venue.Closing,
+			Price:   venue.Price,
+			Games:   venue.Games,
+			Rating:  venue.Rating,
+			OwnerID: venue.OwnerID,
 		}
 	}
 	return responseVenues, nil
 }
 
 func (cs *UserOps) GetVenue(ctx context.Context, id int) (domain.Venue, error) {
-	if id == 0 {
+	fmt.Println("id", id)
+	if id <= 0 {
 		return domain.Venue{}, errors.New("invalid venue id")
 	}
 	venue, err := cs.storer.GetVenue(ctx, id)
@@ -150,41 +152,41 @@ func (cs *UserOps) GetVenue(ctx context.Context, id int) (domain.Venue, error) {
 	} else if err != nil {
 		logger.WithField("err", err.Error()).Error("error getting venue")
 		return domain.Venue{}, errors.New("error getting venue")
-	} 
+	}
 
 	respVenue := domain.Venue{
-		ID:          venue.ID,
-		Name:        venue.Name,
-		Address:     venue.Address,
-		City: 	  	 venue.City,
-		State:       venue.State,
-		Contact:     venue.Contact,
-		Email:       venue.Email,
-		Opening:     venue.Opening,
-		Closing:     venue.Closing,
-		Price:       venue.Price,
-		Games: 	 	 venue.Games,
-		Rating: 	 venue.Rating,
-		OwnerID:     venue.OwnerID,
+		ID:      venue.ID,
+		Name:    venue.Name,
+		Address: venue.Address,
+		City:    venue.City,
+		State:   venue.State,
+		Contact: venue.Contact,
+		Email:   venue.Email,
+		Opening: venue.Opening,
+		Closing: venue.Closing,
+		Price:   venue.Price,
+		Games:   venue.Games,
+		Rating:  venue.Rating,
+		OwnerID: venue.OwnerID,
 	}
 	return respVenue, nil
 }
 
 func (cs *UserOps) UpdateVenue(ctx context.Context, venue domain.Venue, userID int, id int) error {
 	dbVenue := db.Venue{
-		ID:          venue.ID,
-		Name:        venue.Name,
-		Address:     venue.Address,
-		City: 	  	 venue.City,
-		State:       venue.State,
-		Contact:     venue.Contact,
-		Email:       venue.Email,
-		Opening:     venue.Opening,
-		Closing:     venue.Closing,
-		Price:       venue.Price,
-		Games: 	 	 venue.Games,
-		Rating: 	 venue.Rating,
-		OwnerID:     venue.OwnerID,
+		ID:      venue.ID,
+		Name:    venue.Name,
+		Address: venue.Address,
+		City:    venue.City,
+		State:   venue.State,
+		Contact: venue.Contact,
+		Email:   venue.Email,
+		Opening: venue.Opening,
+		Closing: venue.Closing,
+		Price:   venue.Price,
+		Games:   venue.Games,
+		Rating:  venue.Rating,
+		OwnerID: venue.OwnerID,
 	}
 
 	err := cs.storer.UpdateVenue(ctx, dbVenue, userID, id)
@@ -210,10 +212,10 @@ func (cs *UserOps) CheckAvailability(ctx context.Context, venueId int, date stri
 	respSlots := make([]domain.Slot, len(slots))
 	for i, slot := range slots {
 		respSlots[i] = domain.Slot{
-			VenueID: 	slot.VenueID,
-			Date:    	slot.Date,
-			StartTime:  slot.StartTime,
-			EndTime: 	slot.EndTime,
+			VenueID:   slot.VenueID,
+			Date:      slot.Date,
+			StartTime: slot.StartTime,
+			EndTime:   slot.EndTime,
 		}
 	}
 
@@ -222,9 +224,9 @@ func (cs *UserOps) CheckAvailability(ctx context.Context, venueId int, date stri
 
 func (cs *UserOps) BookSlot(ctx context.Context, b domain.Booking) (float64, error) {
 	dbBooking := db.Booking{
-		ID:       	 b.ID,
+		ID:          b.ID,
 		CustomerID:  b.CustomerID,
-		VenueID: 	 b.VenueID,
+		VenueID:     b.VenueID,
 		BookingDate: b.BookingDate,
 		BookingTime: b.BookingTime,
 		StartTime:   b.StartTime,
@@ -261,7 +263,7 @@ func (cs *UserOps) GetAllBookings(ctx context.Context, userId int) ([]domain.Boo
 			BookingTime: booking.BookingTime,
 			StartTime:   booking.StartTime,
 			EndTime:     booking.EndTime,
-			Game: 	     booking.Game,
+			Game:        booking.Game,
 			AmountPaid:  booking.AmountPaid,
 		}
 	}
@@ -282,7 +284,7 @@ func (cs *UserOps) GetBooking(ctx context.Context, id int) (domain.Booking, erro
 		BookingTime: booking.BookingTime,
 		StartTime:   booking.StartTime,
 		EndTime:     booking.EndTime,
-		Game: 	     booking.Game,
+		Game:        booking.Game,
 		AmountPaid:  booking.AmountPaid,
 	}
 

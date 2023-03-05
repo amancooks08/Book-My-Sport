@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 
-	db "github.com/amancooks08/BookMySport/db"
 	"github.com/amancooks08/BookMySport/domain"
 	logger "github.com/sirupsen/logrus"
 )
@@ -63,7 +61,15 @@ func LoginUser(CustomerServices Services) http.HandlerFunc {
 
 			token, err := CustomerServices.LoginUser(req.Context(), cu.Email, cu.Password)
 			if err != nil {
-				http.Error(rw, fmt.Sprintf("%s", err), http.StatusUnauthorized)
+				msg := domain.Message{Message: fmt.Sprintf("%s", err)}
+				respBytes, err := json.Marshal(msg)
+				if err != nil {
+					http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
+					return
+				}
+				rw.WriteHeader(http.StatusUnauthorized)
+				rw.Header().Add("Content-Type", "application/json")
+				rw.Write(respBytes)
 				return
 			}
 			if token != "" {
@@ -85,8 +91,8 @@ func LoginUser(CustomerServices Services) http.HandlerFunc {
 					http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
 					return
 				}
-				rw.Header().Add("Content-Type", "application/json")
 				rw.WriteHeader(http.StatusUnauthorized)
+				rw.Header().Add("Content-Type", "application/json")
 				rw.Write(respBytes)
 				return
 			}
@@ -98,99 +104,78 @@ func LoginUser(CustomerServices Services) http.HandlerFunc {
 	})
 }
 
-func GetAllVenues(CustomerServices Services) http.HandlerFunc {
+// GetVenues function if called with id would return venue with that specific id and if not will return all venues
+
+func GetVenues(CustomerServices Services) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		if req.Method != http.MethodGet {
 			rw.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
 
-		venues, err := CustomerServices.GetAllVenues(req.Context())
-		if err != nil {
-			http.Error(rw, fmt.Sprintf("%s", err), http.StatusInternalServerError)
-			return
-		}
+		venueID := GetVenueID(req)
+		if venueID != 0 {
+			venue, err := CustomerServices.GetVenue(req.Context(), venueID)
+			if err != nil {
+				msg := domain.Message{Message: fmt.Sprintf("%s", err.Error())}
+				respBytes, err := json.Marshal(msg)
+				if err != nil {
+					http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
+					return
+				}
+				// Add not found status
+				rw.WriteHeader(http.StatusNotFound)
+				rw.Header().Add("Content-Type", "application/json")
+				rw.Write(respBytes)
+				return
+			}
 
-		if len(venues) == 0 {
-			msg := domain.Message{Message: "no venues found"}
-			respBytes, err := json.Marshal(msg)
+			respBytes, err := json.Marshal(venue)
 			if err != nil {
 				http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
 				return
 			}
-			// Add not found status
-			rw.Header().Add("Content-Type", "application/json")
-			rw.WriteHeader(http.StatusNotFound)
-			rw.Write(respBytes)
-			return
-		}
-		respBytes, err := json.Marshal(venues)
-		if err != nil {
-			http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
-			return
-		}
 
-		rw.Header().Add("Content-Type", "application/json")
-		rw.Write(respBytes)
+			rw.Header().Add("Content-Type", "application/json")
+			rw.Write(respBytes)
+
+		} else {
+			venues, err := CustomerServices.GetAllVenues(req.Context())
+			if err != nil {
+				msg := domain.Message{Message: fmt.Sprintf("%s", err.Error())}
+				respBytes, err := json.Marshal(msg)
+				if err != nil {
+					http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
+					return
+				}
+				// Add not found status
+				rw.WriteHeader(http.StatusNotFound)
+				rw.Header().Add("Content-Type", "application/json")
+				rw.Write(respBytes)
+				return
+			}
+
+			if len(venues) == 0 {
+				msg := domain.Message{Message: "no venues found"}
+				respBytes, err := json.Marshal(msg)
+				if err != nil {
+					http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
+					return
+				}
+				// Add not found status
+				rw.Header().Add("Content-Type", "application/json")
+				rw.WriteHeader(http.StatusNotFound)
+				rw.Write(respBytes)
+				return
+			}
+			respBytes, err := json.Marshal(venues)
+			if err != nil {
+				http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
+				return
+			}
+
+			rw.Header().Add("Content-Type", "application/json")
+			rw.Write(respBytes)
+		}
 	})
-}
-
-func GetVenue(CustomerServices Services) http.HandlerFunc {
-	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodGet {
-			rw.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-		venueID, err := strconv.Atoi(req.URL.Query().Get("venue_id"))
-		if err != nil || venueID <= 0 {
-			msg := domain.Message{Message: "invalid venue id"}
-			respBytes, err := json.Marshal(msg)
-			if err != nil {
-				http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
-				return
-			}
-
-			// Add not found status
-			rw.Header().Add("Content-Type", "application/json")
-			rw.WriteHeader(http.StatusNotFound)
-			rw.Write(respBytes)
-			return
-		}
-		venue, err := CustomerServices.GetVenue(req.Context(), venueID)
-		if err != nil || err == db.ErrNoVenues {
-			msg := domain.Message{Message: "no venue found"}
-			respBytes, err := json.Marshal(msg)
-			if err != nil {
-				http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
-				return
-			}
-			// Add not found status
-			rw.Header().Add("Content-Type", "application/json")
-			rw.WriteHeader(http.StatusNotFound)
-			rw.Write(respBytes)
-			return
-		} else if err != nil {
-			msg := domain.Message{Message: err.Error()}
-			respBytes, err := json.Marshal(msg)
-			if err != nil {
-				http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
-				return
-			}
-			// Add not found status
-			rw.Header().Add("Content-Type", "application/json")
-			rw.WriteHeader(http.StatusInternalServerError)
-			rw.Write(respBytes)
-			return
-		}
-
-		respBytes, err := json.Marshal(venue)
-		if err != nil {
-			http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
-			return
-		}
-
-		rw.Header().Add("Content-Type", "application/json")
-		rw.Write(respBytes)
-	})
-
 }

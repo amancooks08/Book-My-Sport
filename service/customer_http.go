@@ -28,7 +28,9 @@ func BookSlot(CustomerServices Services) http.HandlerFunc {
 		}
 		defer req.Body.Close()
 
-		booking.CustomerID, booking.VenueID = GetUserVenueId(req, rw)
+		booking.CustomerID = GetUserID(req, rw)
+		booking.VenueID = GetVenueID(req)
+
 		booking.BookingTime = time.Now().Format("2006-01-02 15:04:05.999999-07")
 		date, err := time.Parse("2006-01-02", booking.BookingDate)
 		if err != nil {
@@ -78,7 +80,7 @@ func GetAllBookings(CustomerServices Services) http.HandlerFunc {
 			return
 		}
 
-		userID, _ := GetUserVenueId(req, rw)
+		userID := GetUserID(req, rw)
 
 		bookings, err := CustomerServices.GetAllBookings(req.Context(), userID)
 		if err != nil && err.Error() == "no bookings found" {
@@ -153,7 +155,7 @@ func CancelBooking(CustomerServices Services) http.HandlerFunc {
 		}
 
 		// Get the user_id from the jwt claims
-		userID, _ := GetUserVenueId(req, rw)
+		userID := GetUserID(req, rw)
 
 		// Check if the booking belongs to the user
 		booking, err := CustomerServices.GetBooking(req.Context(), bookingID)

@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/amancooks08/BookMySport/db"
 	"github.com/amancooks08/BookMySport/domain"
 	"github.com/amancooks08/BookMySport/service/mocks"
 	"github.com/stretchr/testify/assert"
@@ -78,7 +77,7 @@ func (suite *UserHandlerTestSuite) TestLoginUser() {
 			Message: "Login Successful",
 		}
 
-		suite.service.On("LoginUser", ctx, requestBody).Return("token", nil)
+		suite.service.On("LoginUser", ctx, requestBody.Email, requestBody.Password).Return("token", nil)
 		deps := dependencies{
 			CustomerServices: suite.service,
 		}
@@ -107,7 +106,7 @@ func (suite *UserHandlerTestSuite) TestLoginUser() {
 			Message: "invalid credentials",
 		}
 
-		suite.service.On("LoginUser", ctx, requestBody).Return("", errors.New("invalid credentials"))
+		suite.service.On("LoginUser", ctx, requestBody.Email, requestBody.Password).Return("", errors.New("invalid credentials"))
 		deps := dependencies{
 			CustomerServices: suite.service,
 		}
@@ -122,107 +121,180 @@ func (suite *UserHandlerTestSuite) TestLoginUser() {
 	})
 }
 
-func (suite *UserHandlerTestSuite) TestGetAllVenues() {
+func (suite *UserHandlerTestSuite) TestGetVenues() {
 	t := suite.T()
-	t.Run("when valid request is made", func(t *testing.T) {
+	t.Run("when valid request is made to get all venues", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/user/venues", nil)
 		rw := httptest.NewRecorder()
 		ctx := req.Context()
 
-		responseBody := []*db.Venue{
+		responseBody := []domain.Venue{
 			{
-				ID:      1,
-				Name:    "Venue1",
-				Address: "Address1",
-				City:    "City1",
-				State:   "State1",
-				Contact: "1234567890",
-				Email:   "email1@gmail.com",
-				Opening: "06:00",
-				Closing: "23:00",
-				Price:   1000,
-				Games:   []string{"Cricket", "Football"},
-				Rating:  4.5,
+				ID:          1,
+				Name:        "Venue1",
+				Address:     "Address1",
+				City:        "City1",
+				State:       "State1",
+				Contact:     "1234567890",
+				Email:       "email1@gmail.com",
+				Opening:     "10:00",
+				Closing:     "20:00",
+				Price:       1000,
+				Games: 	 	 []string{"Cricket", "Football"},
+				OwnerID:     1,
 			},
 
 			{
-				ID:      2,
-				Name:    "Venue2",
-				Address: "Address2",
-				City:    "City2",
-				State:   "State2",
-				Contact: "9383747727",
-				Email:   "email2@gmail.com",
-				Opening: "06:00",
-				Closing: "23:00",
-				Price:   1100,
-				Games:   []string{"Cricket", "Football"},
-				Rating:  4.5,
+				ID:          2,
+				Name: 	  	 "Venue2",
+				Address:     "Address2",
+				City:        "City2",
+				State:       "State2",
+				Contact:     "1234567890",
+				Email:       "email2@gmail.com",
+				Opening:     "10:00",
+				Closing:     "20:00",
+				Price:       1000,
+				Games: 	 	 []string{"Cricket", "Football"},
+				OwnerID:     2,
 			},
 		}
-		suite.service.On("GetAllVenues", ctx).Return([]*db.Venue{
+		suite.service.On("GetAllVenues", ctx).Return([]domain.Venue{
 			{
-				ID:      1,
-				Name:    "Venue1",
-				Address: "Address1",
-				City:    "City1",
-				State:   "State1",
-				Contact: "1234567890",
-				Email:   "email1@gmail.com",
-				Opening: "06:00",
-				Closing: "23:00",
-				Price:   1000,
-				Games:   []string{"Cricket", "Football"},
-				Rating:  4.5,
+				ID:          1,
+				Name:        "Venue1",
+				Address:     "Address1",
+				City:        "City1",
+				State:       "State1",
+				Contact:     "1234567890",
+				Email:       "email1@gmail.com",
+				Opening:     "10:00",
+				Closing:     "20:00",
+				Price:       1000,
+				Games: 	 	 []string{"Cricket", "Football"},
+				OwnerID:     1, 
 			},
+
 			{
-				ID:      2,
-				Name:    "Venue2",
-				Address: "Address2",
-				City:    "City2",
-				State:   "State2",
-				Contact: "9383747727",
-				Email:   "email2@gmail.com",
-				Opening: "06:00",
-				Closing: "23:00",
-				Price:   1100,
-				Games:   []string{"Cricket", "Football"},
-				Rating:  4.5,
+				ID:          2,
+				Name: 	  	 "Venue2",
+				Address:     "Address2",
+				City:        "City2",
+				State:       "State2",
+				Contact:     "1234567890",
+				Email:       "email2@gmail.com",
+				Opening:     "10:00",
+				Closing:     "20:00",
+				Price:       1000,
+				Games: 	 	 []string{"Cricket", "Football"},
+				OwnerID:     2,
 			},
-		}, nil)
+
+		}, nil).Once()
 		deps := dependencies{
 			CustomerServices: suite.service,
 		}
 
 		exp, _ := json.Marshal(responseBody)
 
-		got := GetAllVenues(deps.CustomerServices)
+		got := GetVenues(deps.CustomerServices)
 		got.ServeHTTP(rw, req)
 
 		assert.Equal(t, http.StatusOK, rw.Code)
 		assert.Equal(t, string(exp), rw.Body.String())
 	})
 
-	t.Run("when no venues are present", func(t *testing.T) {
+	t.Run("when no venues are present and all venues were fetched", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/user/venues", nil)
 		rw := httptest.NewRecorder()
 		ctx := req.Context()
 
 		responseBody := domain.Message{
-			Message: "No Venues Found",
+			Message: "no venues found",
 		}
 
-		suite.service.On("GetAllVenues", ctx).Return([]*db.Venue{}, errors.New("No Venues Found"))
+		suite.service.On("GetAllVenues", ctx).Return([]domain.Venue{}, errors.New("no venues found"))
 		deps := dependencies{
 			CustomerServices: suite.service,
 		}
 
 		exp, _ := json.Marshal(responseBody)
 
-		got := GetAllVenues(deps.CustomerServices)
+		got := GetVenues(deps.CustomerServices)
 		got.ServeHTTP(rw, req)
 
+		assert.Equal(t, http.StatusNotFound, rw.Code)
+		assert.Equal(t, string(exp), rw.Body.String())
+	})
+
+	t.Run("when valid request is made to get a venue by its id", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/user/venues?venueID=1", nil)
+		rw := httptest.NewRecorder()
+		ctx := req.Context()
+
+		responseBody := domain.Venue{
+			ID:          1,
+			Name:        "Venue1",
+			Address:     "Address1",
+			City:        "City1",
+			State:       "State1",
+			Contact:     "1234567890",
+			Email:       "email1@gmail.com",
+			Opening:     "10:00",
+			Closing:     "20:00",
+			Price:       1000,
+			Games: 	 	 []string{"Cricket", "Football"},
+			OwnerID:     1,
+		}
+
+		suite.service.On("GetVenue", ctx, 1).Return(domain.Venue{
+			ID:          1,
+			Name:        "Venue1",
+			Address:     "Address1",
+			City:        "City1",
+			State:       "State1",
+			Contact:     "1234567890",
+			Email:       "email1@gmail.com",
+			Opening:     "10:00",
+			Closing:     "20:00",
+			Price:       1000,
+			Games: 	 	 []string{"Cricket", "Football"},
+			OwnerID:     1,
+		}, nil).Once()
+
+		deps := dependencies{
+			CustomerServices: suite.service,
+		}
+
+		exp, _ := json.Marshal(responseBody)
+
+		got := GetVenues(deps.CustomerServices)
+		got.ServeHTTP(rw, req)
+		
 		assert.Equal(t, http.StatusOK, rw.Code)
+		assert.Equal(t, string(exp), rw.Body.String())
+	})
+
+	t.Run("when invalid request is made to get a venue by its id", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/user/venues?venueID=1", nil)
+		rw := httptest.NewRecorder()
+		ctx := req.Context()
+
+		responseBody := domain.Message{
+			Message: "no venue found",
+		}
+
+		suite.service.On("GetVenue", ctx, 1).Return(domain.Venue{}, errors.New("no venue found"))
+		deps := dependencies{
+			CustomerServices: suite.service,
+		}
+
+		exp, _ := json.Marshal(responseBody)
+
+		got := GetVenues(deps.CustomerServices)
+		got.ServeHTTP(rw, req)
+
+		assert.Equal(t, http.StatusNotFound, rw.Code)
 		assert.Equal(t, string(exp), rw.Body.String())
 	})
 }
