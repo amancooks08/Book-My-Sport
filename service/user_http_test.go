@@ -319,10 +319,12 @@ func (suite *UserHandlerTestSuite) TestCheckAvailabililty(){
 	t := suite.T()
 
 	t.Run("when valid request is made to check availability of a venue", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPost, "/user/venues/slots?venueID=1&date=2023-03-07", nil)
+		req := httptest.NewRequest(http.MethodGet, "/user/venues/slots?venueID=1&date=2023-03-07", nil)
 		rw := httptest.NewRecorder()
 		ctx := req.Context()
 
+		venueID := GetVenueID(req)
+		date := req.URL.Query().Get("date")
 		responseBody := []domain.Slot{
 			{
 				VenueID: 1,
@@ -409,7 +411,7 @@ func (suite *UserHandlerTestSuite) TestCheckAvailabililty(){
 			},
 		}
 
-		suite.service.On("CheckAvailability", ctx, 1, "2023-03-07").Return([]domain.Slot{
+		suite.service.On("CheckAvailability", ctx, venueID, date).Return([]domain.Slot{
 			{
 				VenueID: 1,
 				StartTime: "10:00",

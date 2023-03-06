@@ -204,8 +204,16 @@ func CheckAvailability(CustomerServices Services) http.HandlerFunc {
 		}
 		if date.After(time.Now().Truncate(24*time.Hour)) || date.Equal(time.Now().Truncate(24*time.Hour)) {
 			availabileSlots, err := CustomerServices.CheckAvailability(req.Context(), venueID, date.Format("2006-01-02"))
-			if err != nil && {
-				http.Error(rw, fmt.Sprintf("%s", err), http.StatusInternalServerError)
+			if err != nil || len(availabileSlots)==0{
+				msg := domain.Message{Message: fmt.Sprintf("%s", err.Error())}
+				respBytes, err := json.Marshal(msg)
+				if err != nil {
+					http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
+					return
+				}
+				rw.WriteHeader(http.StatusNotFound)
+				rw.Header().Add("Content-Type", "application/json")
+				rw.Write(respBytes)
 				return
 			}
 
@@ -218,8 +226,16 @@ func CheckAvailability(CustomerServices Services) http.HandlerFunc {
 			rw.Header().Add("Content-Type", "application/json")
 			rw.Write(respBytes)
 		} else {
-			http.Error(rw, "invalid date - please selct an upcoming date.", http.StatusBadRequest)
-			return
+			msg := domain.Message{Message: "please select current or an upcoming date"}
+			respBytes, err := json.Marshal(msg)
+			if err != nil {
+				http.Error(rw, "failed to marshal response", http.StatusInternalServerError)
+				return
+			}
+			rw.WriteHeader(http.StatusBadRequest)
+			rw.Header().Add("Content-Type", "application/json")
+			rw.WriteHeader(http.StatusBadRequest)
+			rw.Write(respBytes)
 		}
 	})
 }

@@ -205,6 +205,7 @@ func (cs *UserOps) DeleteVenue(ctx context.Context, userID int, id int) error {
 }
 
 func (cs *UserOps) CheckAvailability(ctx context.Context, venueId int, date string) ([]domain.Slot, error) {
+	fmt.Println("venueId", venueId, "date", date)
 	slots, err := cs.storer.CheckAvailability(ctx, venueId, date)
 	if err != nil {
 		return nil, errors.New("error checking availability")
