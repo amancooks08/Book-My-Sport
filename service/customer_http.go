@@ -31,6 +31,37 @@ func BookSlot(CustomerServices Services) http.HandlerFunc {
 		booking.CustomerID = req.Context().Value("id").(int)
 		booking.VenueID = GetVenueID(req)
 
+		if booking.VenueID == -1 {
+			msg := domain.Message{
+				Message: "please enter a venue ID",
+			}
+
+			json_response, err := json.Marshal(msg)
+			if err != nil {
+				http.Error(rw, "failed to marshal response.", http.StatusInternalServerError)
+				return
+			}
+
+			rw.WriteHeader(http.StatusBadRequest)
+			rw.Header().Add("Content-Type", "application/json")
+			rw.Write(json_response)
+			return
+		} else if booking.VenueID == 0 {
+			msg := domain.Message{
+				Message: "please enter a valid venue ID.",
+			}
+
+			json_response, err := json.Marshal(msg)
+			if err != nil {
+				http.Error(rw, "failed to marshal response.", http.StatusInternalServerError)
+				return
+			}
+
+			rw.WriteHeader(http.StatusBadRequest)
+			rw.Header().Add("Content-Type", "application/json")
+			rw.Write(json_response)
+			return
+		}
 		booking.BookingTime = time.Now().Format("2006-01-02 15:04:05.999999-07")
 		date, err := time.Parse("2006-01-02", booking.BookingDate)
 		if err != nil {

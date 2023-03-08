@@ -158,7 +158,7 @@ func GetUserID(req *http.Request, rw http.ResponseWriter) int {
 
 func GetVenueID(req *http.Request) int {
 	if req.URL.Query().Get("venueID") == "" {
-		return 0
+		return -1
 	}
 	venueID, err := strconv.Atoi(req.URL.Query().Get("venueID"))
 	if err != nil {

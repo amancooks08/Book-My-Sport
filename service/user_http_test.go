@@ -319,7 +319,7 @@ func (suite *UserHandlerTestSuite) TestCheckAvailabililty(){
 	t := suite.T()
 
 	t.Run("when valid request is made to check availability of a venue", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/user/venues/slots?venueID=1&date=2023-03-07", nil)
+		req := httptest.NewRequest(http.MethodGet, "/user/venues/slots?venueID=1&date=2023-03-31", nil)
 		rw := httptest.NewRecorder()
 		ctx := req.Context()
 
@@ -330,84 +330,84 @@ func (suite *UserHandlerTestSuite) TestCheckAvailabililty(){
 				VenueID: 1,
 				StartTime: "10:00",
 				EndTime: "11:00",
-				Date: "2023-03-07",
+				Date: "2023-03-31",
 			},
 
 			{
 				VenueID: 1,
 				StartTime: "11:00",
 				EndTime: "12:00",
-				Date: "2023-03-07",
+				Date: "2023-03-31",
 			},
 
 			{
 				VenueID: 1,
 				StartTime: "12:00",
 				EndTime: "13:00",
-				Date: "2023-03-07",
+				Date: "2023-03-31",
 			},
 
 			{
 				VenueID: 1,
 				StartTime: "13:00",
 				EndTime: "14:00",
-				Date: "2023-03-07",
+				Date: "2023-03-31",
 			},
 
 			{
 				VenueID: 1,
 				StartTime: "14:00",
 				EndTime: "15:00",
-				Date: "2023-03-07",
+				Date: "2023-03-31",
 			},
 
 			{
 				VenueID: 1,
 				StartTime: "15:00",
 				EndTime: "16:00",
-				Date: "2023-03-07",
+				Date: "2023-03-31",
 			},
 
 			{
 				VenueID: 1,
 				StartTime: "16:00",
 				EndTime: "17:00",
-				Date: "2023-03-07",
+				Date: "2023-03-31",
 			},
 
 			{
 				VenueID: 1,
 				StartTime: "17:00",
 				EndTime: "18:00",
-				Date: "2023-03-07",
+				Date: "2023-03-31",
 			},
 
 			{
 				VenueID: 1,
 				StartTime: "18:00",
 				EndTime: "19:00",
-				Date: "2023-03-07",
+				Date: "2023-03-31",
 			},
 
 			{
 				VenueID: 1,
 				StartTime: "19:00",
 				EndTime: "20:00",
-				Date: "2023-03-07",
+				Date: "2023-03-31",
 			},
 
 			{
 				VenueID: 1,
 				StartTime: "20:00",
 				EndTime: "21:00",
-				Date: "2023-03-07",
+				Date: "2023-03-31",
 			},
 
 			{
 				VenueID: 1,
 				StartTime: "21:00",
 				EndTime: "22:00",
-				Date: "2023-03-07",
+				Date: "2023-03-31",
 			},
 		}
 
@@ -416,84 +416,84 @@ func (suite *UserHandlerTestSuite) TestCheckAvailabililty(){
 				VenueID: 1,
 				StartTime: "10:00",
 				EndTime: "11:00",
-				Date: "2023-03-07",
+				Date: "2023-03-31",
 			},
 
 			{
 				VenueID: 1,
 				StartTime: "11:00",
 				EndTime: "12:00",
-				Date: "2023-03-07",
+				Date: "2023-03-31",
 			},
 
 			{
 				VenueID: 1,
 				StartTime: "12:00",
 				EndTime: "13:00",
-				Date: "2023-03-07",
+				Date: "2023-03-31",
 			},
 
 			{
 				VenueID: 1,
 				StartTime: "13:00",
 				EndTime: "14:00",
-				Date: "2023-03-07",
+				Date: "2023-03-31",
 			},
 
 			{
 				VenueID: 1,
 				StartTime: "14:00",
 				EndTime: "15:00",
-				Date: "2023-03-07",
+				Date: "2023-03-31",
 			},
 
 			{
 				VenueID: 1,
 				StartTime: "15:00",
 				EndTime: "16:00",
-				Date: "2023-03-07",
+				Date: "2023-03-31",
 			},
 
 			{
 				VenueID: 1,
 				StartTime: "16:00",
 				EndTime: "17:00",
-				Date: "2023-03-07",
+				Date: "2023-03-31",
 			},
 
 			{
 				VenueID: 1,
 				StartTime: "17:00",
 				EndTime: "18:00",
-				Date: "2023-03-07",
+				Date: "2023-03-31",
 			},
 
 			{
 				VenueID: 1,
 				StartTime: "18:00",
 				EndTime: "19:00",
-				Date: "2023-03-07",
+				Date: "2023-03-31",
 			},
 
 			{
 				VenueID: 1,
 				StartTime: "19:00",
 				EndTime: "20:00",
-				Date: "2023-03-07",
+				Date: "2023-03-31",
 			},
 
 			{
 				VenueID: 1,
 				StartTime: "20:00",
 				EndTime: "21:00",
-				Date: "2023-03-07",
+				Date: "2023-03-31",
 			},
 
 			{
 				VenueID: 1,
 				StartTime: "21:00",
 				EndTime: "22:00",
-				Date: "2023-03-07",
+				Date: "2023-03-31",
 			},
 		}, nil).Once()
 		deps := dependencies{

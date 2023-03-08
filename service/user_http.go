@@ -115,10 +115,10 @@ func GetVenues(CustomerServices Services) http.HandlerFunc {
 		}
 
 		venueID := GetVenueID(req)
-		if venueID != 0 {
+		if venueID > 0 {
 			venue, err := CustomerServices.GetVenue(req.Context(), venueID)
 			if err != nil {
-				msg := domain.Message{Message: fmt.Sprintf("%s", err.Error())}
+				msg := domain.Message{Message: fmt.Sprintf("%s", err)}
 				respBytes, err := json.Marshal(msg)
 				if err != nil {
 					http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
@@ -140,10 +140,10 @@ func GetVenues(CustomerServices Services) http.HandlerFunc {
 			rw.Header().Add("Content-Type", "application/json")
 			rw.Write(respBytes)
 
-		} else {
+		} else if venueID == -1{
 			venues, err := CustomerServices.GetAllVenues(req.Context())
 			if err != nil {
-				msg := domain.Message{Message: fmt.Sprintf("%s", err.Error())}
+				msg := domain.Message{Message: fmt.Sprintf("%s", err)}
 				respBytes, err := json.Marshal(msg)
 				if err != nil {
 					http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
@@ -164,8 +164,8 @@ func GetVenues(CustomerServices Services) http.HandlerFunc {
 					return
 				}
 				// Add not found status
-				rw.Header().Add("Content-Type", "application/json")
 				rw.WriteHeader(http.StatusNotFound)
+				rw.Header().Add("Content-Type", "application/json")
 				rw.Write(respBytes)
 				return
 			}
@@ -177,6 +177,20 @@ func GetVenues(CustomerServices Services) http.HandlerFunc {
 
 			rw.Header().Add("Content-Type", "application/json")
 			rw.Write(respBytes)
+		} else {
+			msg := domain.Message {
+				Message: "invalid venue id",
+			}
+
+			respBytes, err := json.Marshal(msg)
+			if err != nil {
+				http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
+				return
+			}
+			rw.WriteHeader(http.StatusBadRequest)
+			rw.Header().Add("Content-Type", "application/json")
+			rw.Write(respBytes)
+			return
 		}
 	})
 }
@@ -205,7 +219,7 @@ func CheckAvailability(CustomerServices Services) http.HandlerFunc {
 		if date.After(time.Now().Truncate(24*time.Hour)) || date.Equal(time.Now().Truncate(24*time.Hour)) {
 			availabileSlots, err := CustomerServices.CheckAvailability(req.Context(), venueID, date.Format("2006-01-02"))
 			if err != nil || len(availabileSlots)==0{
-				msg := domain.Message{Message: fmt.Sprintf("%s", err.Error())}
+				msg := domain.Message{Message: fmt.Sprintf("%s", err)}
 				respBytes, err := json.Marshal(msg)
 				if err != nil {
 					http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)

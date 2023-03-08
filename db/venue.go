@@ -87,8 +87,8 @@ func (s *pgStore) CheckVenue(ctx context.Context, name string, contact string, e
 func (s *pgStore) GetVenue(ctx context.Context, id int) (Venue, error) {
 	rows, err := s.db.Query(GetVenueQuery, &id)
 	if err != nil && err == sql.ErrNoRows {
-		logger.WithField("err", err.Error()).Error("error: invalid venue id")
-		return Venue{}, ErrInvalidVID
+		logger.WithField("err", err.Error()).Error("no venue found")
+		return Venue{}, ErrNoVenue
 	} else if err != nil {
 		logger.WithField("err", err.Error()).Error("error fetching venue")
 		return Venue{}, ErrFetchingVenue
@@ -243,7 +243,7 @@ func (s *pgStore) CheckAvailability(ctx context.Context, venueId int, date strin
 			slotList = append(slotList, slot)
 			currentTime = currentTime.Add(time.Hour)
 		}
-		
+
 		for _, bookedSlot := range bookedSlots {
 			for i, slot := range slotList {
 				if slot.StartTime == bookedSlot.StartTime {
