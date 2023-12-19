@@ -1,4 +1,4 @@
-## Golang Boilerplate
+## Josh Golang Boilerplate
 Golang boilerplate to kickstart any go api project. This supports 2 database configurations currently:
 
 * MongoDB
