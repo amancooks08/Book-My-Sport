@@ -87,8 +87,8 @@ func (s *pgStore) CheckVenue(ctx context.Context, name string, contact string, e
 func (s *pgStore) GetVenue(ctx context.Context, id int) (Venue, error) {
 	rows, err := s.db.Query(GetVenueQuery, &id)
 	if err != nil && err == sql.ErrNoRows {
-		logger.WithField("err", err.Error()).Error("error: invalid venue id")
-		return Venue{}, ErrInvalidVID
+		logger.WithField("err", err.Error()).Error("no venue found")
+		return Venue{}, ErrNoVenue
 	} else if err != nil {
 		logger.WithField("err", err.Error()).Error("error fetching venue")
 		return Venue{}, ErrFetchingVenue
@@ -166,19 +166,23 @@ func (s *pgStore) DeleteVenue(ctx context.Context, userID int, id int) error {
 //Check availability of slots at a venue
 
 func (s *pgStore) CheckAvailability(ctx context.Context, venueId int, date string) ([]Slot, error) {
+	
 	var exists bool
+
 	// Check if slots for the venue on that day exist
 	err := s.db.QueryRow("SELECT exists(SELECT 1 FROM slots WHERE venue_id = $1 AND date = $2)", venueId, date).Scan(&exists)
 	if err != nil {
 		logger.WithField("err", err.Error()).Error("error checking availability")
 		return nil, ErrCheckAvailability
 	}
+
 	var venueOpen, venueClose string
 	err = s.db.QueryRow(GetVenueTimingsQuery, venueId).Scan(&venueOpen, &venueClose)
 	if err != nil {
 		logger.WithField("err", err.Error()).Error("error getting venue opening and closing times")
 		return nil, ErrGetTimings
 	}
+
 	if !exists {
 		// If slots don't exist, create them
 		currentTime, err := time.Parse("15:04:05", venueOpen[11:19])
@@ -208,6 +212,7 @@ func (s *pgStore) CheckAvailability(ctx context.Context, venueId int, date strin
 		}
 		defer rows.Close()
 		bookedSlots := []Slot{}
+
 		for rows.Next() {
 			slot := Slot{VenueID: 0, Date: "", StartTime: "", EndTime: ""}
 			err = rows.Scan(&slot.VenueID, &slot.Date, &slot.StartTime, &slot.EndTime)
@@ -220,6 +225,7 @@ func (s *pgStore) CheckAvailability(ctx context.Context, venueId int, date strin
 			}
 			bookedSlots = append(bookedSlots, slot)
 		}
+
 		currentTime, err := time.Parse("15:04:05", venueOpen[11:19])
 		if err != nil {
 			logger.WithField("err", err.Error()).Error("error parsing time")
@@ -230,12 +236,14 @@ func (s *pgStore) CheckAvailability(ctx context.Context, venueId int, date strin
 			logger.WithField("err", err.Error()).Error("error parsing time")
 			return nil, ErrParseTime
 		}
+
 		var slotList []Slot
 		for currentTime.Before(venueClosing) {
 			slot := Slot{VenueID: venueId, Date: date, StartTime: currentTime.Format("15:04"), EndTime: currentTime.Add(time.Hour).Format("15:04")}
 			slotList = append(slotList, slot)
 			currentTime = currentTime.Add(time.Hour)
 		}
+
 		for _, bookedSlot := range bookedSlots {
 			for i, slot := range slotList {
 				if slot.StartTime == bookedSlot.StartTime {

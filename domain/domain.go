@@ -32,7 +32,7 @@ type Venue struct {
 	Price   float64  `json:"price"`
 	Games   []string `json:"games"`
 	Rating  float64  `json:"rating"`
-	OwnerID int 	 `json:"-"`
+	OwnerID int      `json:"-"`
 }
 
 type Booking struct {
@@ -65,7 +65,6 @@ type LoginResponse struct {
 	Token   string `json:"token"`
 	Message string `json:"message"`
 }
-
 
 type Message struct {
 	Message string `json:"message"`

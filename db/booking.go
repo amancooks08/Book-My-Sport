@@ -96,6 +96,10 @@ func (s *pgStore) GetAllBookings(ctx context.Context, userId int) ([]Booking, er
 	bookings := []Booking{}
 
 	rows, err := s.db.Query(GetAllBookingsQuery, &userId)
+	if err != nil {
+		logger.WithField("err", err.Error()).Error("error getting all bookings")
+		return nil, ErrGetBookings
+	}
 	defer rows.Close()
 	if err != nil {
 		if err == sql.ErrNoRows {

@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"time"
@@ -81,6 +80,11 @@ func (cs *UserOps) LoginUser(ctx context.Context, email string, password string)
 		return "", errors.New("invalid credentials")
 	}
 
+	if err != nil {
+		logger.WithField("err", err.Error()).Error("error logging in user")
+		return "", errors.New("error logging in user")
+	}
+
 	token, err := GenerateToken(loginResponse)
 	if err != nil {
 		logger.WithField("err", err.Error()).Error("error generating jwt token for given userId")
@@ -146,12 +150,9 @@ func (cs *UserOps) GetVenue(ctx context.Context, id int) (domain.Venue, error) {
 		return domain.Venue{}, errors.New("invalid venue id")
 	}
 	venue, err := cs.storer.GetVenue(ctx, id)
-	if err != nil && err == sql.ErrNoRows {
-		logger.WithField("err", err.Error()).Error("no venue found")
-		return domain.Venue{}, errors.New("no venue found")
-	} else if err != nil {
+	if err != nil {
 		logger.WithField("err", err.Error()).Error("error getting venue")
-		return domain.Venue{}, errors.New("error getting venue")
+		return domain.Venue{}, err
 	}
 
 	respVenue := domain.Venue{
@@ -205,6 +206,7 @@ func (cs *UserOps) DeleteVenue(ctx context.Context, userID int, id int) error {
 }
 
 func (cs *UserOps) CheckAvailability(ctx context.Context, venueId int, date string) ([]domain.Slot, error) {
+	fmt.Println("venueId", venueId, "date", date)
 	slots, err := cs.storer.CheckAvailability(ctx, venueId, date)
 	if err != nil {
 		return nil, errors.New("error checking availability")

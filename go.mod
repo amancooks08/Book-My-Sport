@@ -12,6 +12,7 @@ require (
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/viper v1.15.0
 	github.com/stretchr/testify v1.8.2
+	github.com/undefinedlabs/go-mpatch v1.0.6
 	github.com/urfave/cli/v2 v2.24.3
 	github.com/urfave/negroni v1.0.0
 	golang.org/x/crypto v0.6.0

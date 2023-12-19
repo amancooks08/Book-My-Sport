@@ -28,9 +28,40 @@ func BookSlot(CustomerServices Services) http.HandlerFunc {
 		}
 		defer req.Body.Close()
 
-		booking.CustomerID = GetUserID(req, rw)
+		booking.CustomerID = req.Context().Value("id").(int)
 		booking.VenueID = GetVenueID(req)
 
+		if booking.VenueID == -1 {
+			msg := domain.Message{
+				Message: "please enter a venue ID",
+			}
+
+			json_response, err := json.Marshal(msg)
+			if err != nil {
+				http.Error(rw, "failed to marshal response.", http.StatusInternalServerError)
+				return
+			}
+
+			rw.WriteHeader(http.StatusBadRequest)
+			rw.Header().Add("Content-Type", "application/json")
+			rw.Write(json_response)
+			return
+		} else if booking.VenueID == 0 {
+			msg := domain.Message{
+				Message: "please enter a valid venue ID.",
+			}
+
+			json_response, err := json.Marshal(msg)
+			if err != nil {
+				http.Error(rw, "failed to marshal response.", http.StatusInternalServerError)
+				return
+			}
+
+			rw.WriteHeader(http.StatusBadRequest)
+			rw.Header().Add("Content-Type", "application/json")
+			rw.Write(json_response)
+			return
+		}
 		booking.BookingTime = time.Now().Format("2006-01-02 15:04:05.999999-07")
 		date, err := time.Parse("2006-01-02", booking.BookingDate)
 		if err != nil {
@@ -59,14 +90,19 @@ func BookSlot(CustomerServices Services) http.HandlerFunc {
 			return
 		}
 
-		type jsonResponse struct {
-			Reponse string
-			Amount  float64
+		response := domain.BookingResponse{
+			Message: "Booking Successful.", 
+			Amount: roundFloat(amount, 2),
+		}
+		jsonResponse, err := json.Marshal(response)
+		if err != nil {
+			http.Error(rw, "failed to marshal response.", http.StatusInternalServerError)
+			return
 		}
 
-		response := jsonResponse{Reponse: "Booking successful.", Amount: amount}
-		rw.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(rw).Encode(response)
+		rw.WriteHeader(http.StatusOK)	
+		rw.Header().Add("Content-Type", "application/json")
+		rw.Write(jsonResponse)
 	})
 }
 
@@ -80,7 +116,7 @@ func GetAllBookings(CustomerServices Services) http.HandlerFunc {
 			return
 		}
 
-		userID := GetUserID(req, rw)
+		userID := req.Context().Value("id").(int)
 
 		bookings, err := CustomerServices.GetAllBookings(req.Context(), userID)
 		if err != nil && err.Error() == "no bookings found" {

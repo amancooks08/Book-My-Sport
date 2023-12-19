@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/amancooks08/BookMySport/domain"
 	logger "github.com/sirupsen/logrus"
@@ -114,10 +115,10 @@ func GetVenues(CustomerServices Services) http.HandlerFunc {
 		}
 
 		venueID := GetVenueID(req)
-		if venueID != 0 {
+		if venueID > 0 {
 			venue, err := CustomerServices.GetVenue(req.Context(), venueID)
 			if err != nil {
-				msg := domain.Message{Message: fmt.Sprintf("%s", err.Error())}
+				msg := domain.Message{Message: fmt.Sprintf("%s", err)}
 				respBytes, err := json.Marshal(msg)
 				if err != nil {
 					http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
@@ -139,10 +140,10 @@ func GetVenues(CustomerServices Services) http.HandlerFunc {
 			rw.Header().Add("Content-Type", "application/json")
 			rw.Write(respBytes)
 
-		} else {
+		} else if venueID == -1{
 			venues, err := CustomerServices.GetAllVenues(req.Context())
 			if err != nil {
-				msg := domain.Message{Message: fmt.Sprintf("%s", err.Error())}
+				msg := domain.Message{Message: fmt.Sprintf("%s", err)}
 				respBytes, err := json.Marshal(msg)
 				if err != nil {
 					http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
@@ -163,8 +164,8 @@ func GetVenues(CustomerServices Services) http.HandlerFunc {
 					return
 				}
 				// Add not found status
-				rw.Header().Add("Content-Type", "application/json")
 				rw.WriteHeader(http.StatusNotFound)
+				rw.Header().Add("Content-Type", "application/json")
 				rw.Write(respBytes)
 				return
 			}
@@ -175,6 +176,79 @@ func GetVenues(CustomerServices Services) http.HandlerFunc {
 			}
 
 			rw.Header().Add("Content-Type", "application/json")
+			rw.Write(respBytes)
+		} else {
+			msg := domain.Message {
+				Message: "invalid venue id",
+			}
+
+			respBytes, err := json.Marshal(msg)
+			if err != nil {
+				http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
+				return
+			}
+			rw.WriteHeader(http.StatusBadRequest)
+			rw.Header().Add("Content-Type", "application/json")
+			rw.Write(respBytes)
+			return
+		}
+	})
+}
+
+// Check availbility at a venue
+func CheckAvailability(CustomerServices Services) http.HandlerFunc {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+
+		if req.Method != http.MethodGet {
+			rw.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+
+		venueID := GetVenueID(req)
+
+		// Check if date is present or not
+		if req.URL.Query().Get("date") == "" {
+			http.Error(rw, "please enter date if not entered or correct it if not added properly.", http.StatusBadRequest)
+			return
+		}
+		date, err := time.Parse("2006-01-02", req.URL.Query().Get("date"))
+		if err != nil {
+			http.Error(rw, "invalid date format", http.StatusBadRequest)
+			return
+		}
+		if date.After(time.Now().Truncate(24*time.Hour)) || date.Equal(time.Now().Truncate(24*time.Hour)) {
+			availabileSlots, err := CustomerServices.CheckAvailability(req.Context(), venueID, date.Format("2006-01-02"))
+			if err != nil || len(availabileSlots)==0{
+				msg := domain.Message{Message: fmt.Sprintf("%s", err)}
+				respBytes, err := json.Marshal(msg)
+				if err != nil {
+					http.Error(rw, "Failed to marshal response", http.StatusInternalServerError)
+					return
+				}
+				rw.WriteHeader(http.StatusNotFound)
+				rw.Header().Add("Content-Type", "application/json")
+				rw.Write(respBytes)
+				return
+			}
+
+			respBytes, err := json.Marshal(availabileSlots)
+			if err != nil {
+				http.Error(rw, "failed to marshal response", http.StatusInternalServerError)
+				return
+			}
+
+			rw.Header().Add("Content-Type", "application/json")
+			rw.Write(respBytes)
+		} else {
+			msg := domain.Message{Message: "please select current or an upcoming date"}
+			respBytes, err := json.Marshal(msg)
+			if err != nil {
+				http.Error(rw, "failed to marshal response", http.StatusInternalServerError)
+				return
+			}
+			rw.WriteHeader(http.StatusBadRequest)
+			rw.Header().Add("Content-Type", "application/json")
+			rw.WriteHeader(http.StatusBadRequest)
 			rw.Write(respBytes)
 		}
 	})

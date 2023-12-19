@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -109,7 +110,7 @@ func HashPassword(password string) (string, error) {
 	return string(bytes), err
 }
 
-func GetUserID(req *http.Request, rw http.ResponseWriter) (int) {
+func GetUserID(req *http.Request, rw http.ResponseWriter) int {
 	header := req.Header.Get("Authorization")
 
 	// Check if the header is missing or invalid
@@ -156,8 +157,8 @@ func GetUserID(req *http.Request, rw http.ResponseWriter) (int) {
 }
 
 func GetVenueID(req *http.Request) int {
-	if(req.URL.Query().Get("venueID") == ""){
-		return 0
+	if req.URL.Query().Get("venueID") == "" {
+		return -1
 	}
 	venueID, err := strconv.Atoi(req.URL.Query().Get("venueID"))
 	if err != nil {
@@ -170,4 +171,9 @@ func GetVenueID(req *http.Request) int {
 
 type dependencies struct {
 	CustomerServices Services
+}
+
+func roundFloat(val float64, precision uint) float64 {
+	ratio := math.Pow(10, float64(precision))
+	return math.Round(val*ratio) / ratio
 }
